@@ -71,11 +71,16 @@
         }
         .ch:active .dot { transform: translate(-50%,-50%) scale(1.5); background: var(--primary-light); }
 
+        /* --- UI ELEMENTS WITH SMOOTH TRANSITIONS --- */
+        #topBar, #botPanel, #miniBar {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         /* --- TOP BAR --- */
         #topBar {
             position: absolute; top: 0; left: 0; right: 0; z-index: 20;
             padding: 12px; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
-            display: flex; justify-content: center; transition: opacity 0.3s;
+            display: flex; justify-content: center;
         }
         .status-pill {
             display: flex; align-items: center; gap: 8px;
@@ -91,7 +96,7 @@
         #botPanel {
             position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
-            padding: 20px 16px calc(var(--safe-bottom) + 12px); transition: opacity 0.3s;
+            padding: 20px 16px calc(var(--safe-bottom) + 12px);
         }
         .ctrl-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; opacity: 0.5; pointer-events: none; transition: opacity 0.3s; }
         .ctrl-row.active { opacity: 1; pointer-events: auto; }
@@ -147,6 +152,27 @@
         .mini-btn.primary { background: var(--primary); }
         .mini-btn.danger { background: rgba(255,107,107,0.2); color: var(--danger); }
 
+        /* --- ZEN MODE (HIDE UI) BUTTON --- */
+        #eyeBtn {
+            position: absolute; top: 12px; right: 16px; z-index: 100;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15); color: white; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #eyeBtn:active { transform: scale(0.9); }
+
+        /* --- UI HIDDEN STATE --- */
+        .ui-hidden #topBar { opacity: 0 !important; pointer-events: none !important; transform: translateY(-20px); }
+        .ui-hidden #botPanel { opacity: 0 !important; pointer-events: none !important; transform: translateY(20px); }
+        .ui-hidden #miniBar { opacity: 0 !important; pointer-events: none !important; transform: translateY(20px) scale(0.95); }
+        .ui-hidden #eyeBtn {
+            opacity: 0.3; transform: scale(0.85); background: transparent; 
+            border-color: transparent; box-shadow: none;
+        }
+
         /* --- UPLOAD MODAL --- */
         #modalWrap {
             position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
@@ -195,6 +221,8 @@
     <div class="ch" id="c1"><div class="dot"></div></div>
     <div class="ch" id="c2"><div class="dot"></div></div>
     <div class="ch" id="c3"><div class="dot"></div></div>
+
+    <button id="eyeBtn" onclick="toggleUI()">👁️</button>
 
     <div id="topBar">
         <div class="status-pill">
@@ -264,6 +292,7 @@ const S = {
     flipH: false, flipV: false, rot: 0,
     blendMode: 'normal', // normal or multiply
     corners: null, cornerMode: false, locked: false,
+    uiHidden: false, // اضافه شدن وضعیت مخفی بودن رابط کاربری
     srcCanvas: null, 
     meshDirty: false, 
     needsRender: false 
@@ -272,7 +301,6 @@ const S = {
 const W = () => window.innerWidth;
 const H = () => window.innerHeight;
 
-// استفاده از بوم مخفی با آلفا فعال (transparent) برای رفع باگ تاریک شدن دوربین
 const offCvs = document.createElement('canvas');
 const offCtx = offCvs.getContext('2d', { alpha: true }); 
 
@@ -283,6 +311,23 @@ function startApp() {
         document.getElementById('app').classList.add('active');
         initCam();
     }, 500);
+}
+
+// ---- UI TOGGLE (ZEN MODE) ----
+function toggleUI() {
+    S.uiHidden = !S.uiHidden;
+    const app = document.getElementById('app');
+    const eyeBtn = document.getElementById('eyeBtn');
+    
+    if (S.uiHidden) {
+        app.classList.add('ui-hidden');
+        eyeBtn.innerHTML = '👁️'; 
+        // وقتی هاید میشه آیکون چشم روی صفحه میمونه ولی خیلی محو
+        toast('UI Hidden. Tap the faint eye to restore.');
+    } else {
+        app.classList.remove('ui-hidden');
+        eyeBtn.innerHTML = '👁️';
+    }
 }
 
 // ---- CAMERA ----
