@@ -2,373 +2,1671 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Perspective Tracer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>AR Draw Assist</title>
     <style>
-        :root {
-            --primary: #007AFF;
-            --bg-glass: rgba(18, 18, 20, 0.75);
-            --border-glass: rgba(255, 255, 255, 0.15);
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A5;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: none; }
-        
-        /* Camera Feed */
-        #camera-feed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
-        
-        /* Overlay Image Container */
-        #perspective-container { position: absolute; top: 0; left: 0; transform-origin: 0 0; z-index: 2; pointer-events: none; }
-        #overlay-image { width: 600px; height: 600px; object-fit: contain; opacity: 0.5; transition: filter 0.3s; }
-        
-        /* Corner Handles */
-        .corner { position: absolute; width: 44px; height: 44px; background: rgba(0, 122, 255, 0.4); border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); z-index: 3; touch-action: none; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); backdrop-filter: blur(4px); transition: opacity 0.3s; }
-        .corner::after { content: ''; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); }
-        .corner.locked { background: rgba(255, 59, 48, 0.4); pointer-events: none; }
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --dark: #1a1a2e;
+            --darker: #0f0f1e;
+            --card-bg: rgba(26, 26, 46, 0.92);
+            --text: #f0f0f0;
+            --text-dim: #888;
+            --danger: #ff6b6b;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --radius: 16px;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
 
-        /* HUD & Controls */
-        #hud-container { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 400px; z-index: 10; transition: opacity 0.4s ease, transform 0.4s ease; display: flex; flex-direction: column; gap: 12px; }
-        #hud-container.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 20px); }
+        body {
+            background: #000;
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            width: 100vw;
+            position: fixed;
+        }
 
-        .panel { background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-glass); padding: 16px; border-radius: 20px; color: var(--text-main); display: flex; flex-direction: column; gap: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
-        
-        /* Form Elements */
-        .control-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .control-col { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-        
-        label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        select, button { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-glass); background: rgba(255,255,255,0.08); color: white; outline: none; font-size: 14px; font-weight: 500; appearance: none; -webkit-appearance: none; cursor: pointer; }
-        select { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 10px auto; padding-right: 30px; }
-        select option { background: #1c1c1e; color: white; }
-        
-        button { background: rgba(255,255,255,0.15); transition: background 0.2s; }
-        button:active { background: rgba(255,255,255,0.25); }
-        button.primary { background: var(--primary); border-color: transparent; }
-        
-        .btn-group { display: flex; gap: 10px; }
-        
-        /* Sliders */
-        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; height: 24px; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #fff; cursor: pointer; margin-top: -6px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        /* ===== SPLASH SCREEN ===== */
+        #splashScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
 
-        /* File Upload */
-        .file-upload-wrapper { position: relative; width: 100%; }
-        .file-upload-wrapper input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+        #splashScreen.hidden {
+            opacity: 0;
+            transform: scale(1.1);
+            pointer-events: none;
+        }
 
-        /* Minimal Toggle Button (Eye) */
-        #toggle-hud-btn { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: var(--bg-glass); backdrop-filter: blur(10px); border: 1px solid var(--border-glass); color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; }
-        
-        /* Hidden UI states for Corners */
-        .hide-corners .corner { opacity: 0 !important; pointer-events: none; }
+        .splash-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 60px rgba(108, 92, 231, 0.4);
+            animation: splashPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes splashPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .splash-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .splash-subtitle {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+
+        .splash-btn {
+            padding: 16px 48px;
+            background: linear-gradient(135deg, var(--primary), #5a4bd1);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(108, 92, 231, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .splash-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        #appContainer {
+            position: fixed;
+            inset: 0;
+            display: none;
+        }
+
+        #appContainer.active {
+            display: block;
+        }
+
+        /* ===== VIDEO / CAMERA ===== */
+        #cameraVideo {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        /* ===== OVERLAY CANVAS (for perspective transform) ===== */
+        #overlayCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* ===== CORNER HANDLES ===== */
+        .corner-handle {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            z-index: 5;
+            cursor: move;
+            display: none;
+        }
+
+        .corner-handle .visual {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 3px solid white;
+            box-shadow: 0 2px 12px rgba(0, 206, 201, 0.6), 0 0 0 4px rgba(0, 206, 201, 0.2);
+            transition: transform 0.15s ease;
+        }
+
+        .corner-handle:active .visual {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        .corner-handle .label {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--accent);
+            font-weight: 600;
+            white-space: nowrap;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+        }
+
+        /* ===== TOP BAR ===== */
+        #topBar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            padding: 12px 16px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .top-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+
+        .top-btn:active {
+            transform: scale(0.9);
+            background: var(--primary);
+        }
+
+        .top-btn.active {
+            background: var(--primary);
+            border-color: var(--primary-light);
+        }
+
+        .top-title {
+            font-size: 15px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+
+        /* ===== LENS SELECTOR ===== */
+        #lensSelector {
+            position: absolute;
+            top: 64px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 4px;
+            background: var(--card-bg);
+            border-radius: 50px;
+            padding: 4px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        #lensSelector.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lens-btn {
+            padding: 8px 16px;
+            border-radius: 50px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .lens-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ===== BOTTOM CONTROLS ===== */
+        #bottomPanel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+            padding: 20px 16px calc(var(--safe-bottom) + 12px);
+        }
+
+        /* Opacity Slider */
+        .slider-container {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+
+        .slider-container.visible {
+            display: flex;
+        }
+
+        .slider-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            min-width: 52px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .slider-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            outline: none;
+            opacity: 0.9;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 3px rgba(108, 92, 231, 0.3);
+            cursor: pointer;
+        }
+
+        /* Action Buttons Row */
+        .action-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.9);
+        }
+
+        .action-btn .icon-wrap {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.active .icon-wrap {
+            background: var(--primary);
+            border-color: var(--primary-light);
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+        }
+
+        .action-btn.primary .icon-wrap {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), #5a4bd1);
+            border-color: var(--primary-light);
+            font-size: 26px;
+            box-shadow: 0 4px 24px rgba(108, 92, 231, 0.5);
+        }
+
+        .action-btn span {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .action-btn.active span {
+            color: var(--primary-light);
+        }
+
+        /* ===== IMAGE UPLOAD MODAL ===== */
+        #uploadModal {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        #uploadModal.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--dark);
+            border-radius: 24px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .modal-desc {
+            font-size: 13px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(108, 92, 231, 0.4);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(108, 92, 231, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .upload-zone:active {
+            border-color: var(--primary);
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .upload-zone .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-zone .text {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .upload-zone .subtext {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .modal-close-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-dim);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close-btn:active {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* ===== HELP MODAL ===== */
+        #helpModal {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        #helpModal.active {
+            display: flex;
+        }
+
+        .help-sheet {
+            background: var(--dark);
+            border-radius: 24px 24px 0 0;
+            padding: 24px 20px calc(var(--safe-bottom) + 20px);
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-bottom: none;
+        }
+
+        .help-sheet .handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+
+        .help-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .help-step {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 18px;
+            align-items: flex-start;
+        }
+
+        .help-step .num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .help-step .content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .help-step .content p {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* ===== SCALE SLIDER ===== */
+        .slider-container.scale-slider {
+            display: none;
+        }
+        .slider-container.scale-slider.visible {
+            display: flex;
+        }
+
+        /* ===== TOAST ===== */
+        #toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            z-index: 200;
+            background: var(--card-bg);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        #toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== EDGE LINES (perspective outline) ===== */
+        #edgeCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* ===== STATUS INDICATOR ===== */
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--card-bg);
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.warning {
+            background: var(--warning);
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-text {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* ===== RESET PERSPECTIVE BTN ===== */
+        #resetPerspBtn {
+            display: none;
+            position: absolute;
+            top: 110px;
+            right: 16px;
+            z-index: 20;
+            padding: 8px 14px;
+            border-radius: 50px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--warning);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            transition: all 0.2s ease;
+        }
+
+        #resetPerspBtn:active {
+            transform: scale(0.95);
+        }
+
+        /* ===== LOCK INDICATOR ===== */
+        .lock-badge {
+            display: none;
+            position: absolute;
+            top: 110px;
+            left: 16px;
+            z-index: 20;
+            padding: 6px 12px;
+            border-radius: 50px;
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: var(--danger);
+            font-size: 11px;
+            font-weight: 700;
+            backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .lock-badge.visible {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ===== Flip buttons ===== */
+        .transform-row {
+            display: none;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .transform-row.visible {
+            display: flex;
+        }
+
+        .transform-btn {
+            padding: 8px 16px;
+            border-radius: 50px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .transform-btn:active {
+            transform: scale(0.95);
+            background: var(--primary);
+        }
+
+        /* Hidden file input */
+        #fileInput {
+            display: none;
+        }
+
+        /* Preview Thumbnail */
+        .preview-thumb {
+            display: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .preview-thumb.visible {
+            display: block;
+        }
     </style>
 </head>
-<body id="app-body">
+<body>
 
-    <video id="camera-feed" autoplay playsinline></video>
-    
-    <div id="perspective-container">
-        <img id="overlay-image" src="" alt="">
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen">
+        <div class="splash-icon">🎨</div>
+        <div class="splash-title">AR Draw Assist</div>
+        <div class="splash-subtitle">Trace & draw with camera overlay</div>
+        <button class="splash-btn" onclick="startApp()">Get Started</button>
     </div>
 
-    <div id="pt0" class="corner"></div>
-    <div id="pt1" class="corner"></div>
-    <div id="pt2" class="corner"></div>
-    <div id="pt3" class="corner"></div>
+    <!-- MAIN APP -->
+    <div id="appContainer">
+        <!-- Camera Feed -->
+        <video id="cameraVideo" autoplay playsinline muted></video>
 
-    <div id="toggle-hud-btn">👁️</div>
+        <!-- Overlay Canvas (perspective-warped image) -->
+        <canvas id="overlayCanvas"></canvas>
 
-    <div id="hud-container">
-        <div class="panel">
-            <div class="control-row">
-                <div class="control-col">
-                    <label>Lens Selection</label>
-                    <select id="camera-select"><option>Loading cameras...</option></select>
-                </div>
+        <!-- Edge lines canvas -->
+        <canvas id="edgeCanvas"></canvas>
+
+        <!-- Corner Handles -->
+        <div class="corner-handle" id="corner0">
+            <div class="label">TL</div>
+            <div class="visual"></div>
+        </div>
+        <div class="corner-handle" id="corner1">
+            <div class="label">TR</div>
+            <div class="visual"></div>
+        </div>
+        <div class="corner-handle" id="corner2">
+            <div class="label">BR</div>
+            <div class="visual"></div>
+        </div>
+        <div class="corner-handle" id="corner3">
+            <div class="label">BL</div>
+            <div class="visual"></div>
+        </div>
+
+        <!-- Top Bar -->
+        <div id="topBar">
+            <button class="top-btn" onclick="toggleHelp()" title="Help">❓</button>
+            <div class="status-pill">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Camera Ready</span>
+            </div>
+            <button class="top-btn" onclick="switchCamera()" title="Switch Camera">🔄</button>
+        </div>
+
+        <!-- Lens Selector -->
+        <div id="lensSelector">
+            <button class="lens-btn" data-zoom="0.5" onclick="setZoom(0.5, this)">0.5x</button>
+            <button class="lens-btn active" data-zoom="1" onclick="setZoom(1, this)">1x</button>
+            <button class="lens-btn" data-zoom="2" onclick="setZoom(2, this)">2x</button>
+            <button class="lens-btn" data-zoom="3" onclick="setZoom(3, this)">3x</button>
+            <button class="lens-btn" data-zoom="5" onclick="setZoom(5, this)">5x</button>
+            <button class="lens-btn" data-zoom="10" onclick="setZoom(10, this)">10x</button>
+        </div>
+
+        <!-- Lock badge -->
+        <div class="lock-badge" id="lockBadge">🔒 Corners Locked</div>
+
+        <!-- Reset Perspective -->
+        <button id="resetPerspBtn" onclick="resetPerspective()">↩ Reset Corners</button>
+
+        <!-- Bottom Panel -->
+        <div id="bottomPanel">
+            <!-- Opacity Slider -->
+            <div class="slider-container" id="opacitySlider">
+                <span class="slider-label">Opacity</span>
+                <input type="range" id="opacityRange" min="0" max="100" value="50" oninput="updateOpacity(this.value)">
+                <span class="slider-value" id="opacityValue">50%</span>
             </div>
 
-            <div class="control-row" id="zoom-container" style="display: none;">
-                <div class="control-col">
-                    <label>Hardware Zoom</label>
-                    <input type="range" id="zoom-slider" min="1" max="10" step="0.1" value="1">
-                </div>
+            <!-- Scale Slider -->
+            <div class="slider-container scale-slider" id="scaleSlider">
+                <span class="slider-label">Scale</span>
+                <input type="range" id="scaleRange" min="10" max="300" value="100" oninput="updateScale(this.value)">
+                <span class="slider-value" id="scaleValue">100%</span>
+            </div>
+
+            <!-- Transform buttons -->
+            <div class="transform-row" id="transformRow">
+                <button class="transform-btn" onclick="flipImage('h')">↔ Flip H</button>
+                <button class="transform-btn" onclick="flipImage('v')">↕ Flip V</button>
+                <button class="transform-btn" onclick="rotateImage()">⟳ Rotate</button>
+                <button class="transform-btn" onclick="toggleInvert()">◑ Invert</button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-row">
+                <button class="action-btn" id="uploadBtn" onclick="openUpload()">
+                    <div class="icon-wrap">🖼️</div>
+                    <span>Image</span>
+                </button>
+
+                <button class="action-btn" id="perspectiveBtn" onclick="togglePerspective()">
+                    <div class="icon-wrap">📐</div>
+                    <span>Corners</span>
+                </button>
+
+                <button class="action-btn" id="lensToggle" onclick="toggleLensSelector()">
+                    <div class="icon-wrap">🔍</div>
+                    <span>Lens</span>
+                </button>
+
+                <button class="action-btn" id="lockBtn" onclick="toggleLock()">
+                    <div class="icon-wrap">🔓</div>
+                    <span>Lock</span>
+                </button>
+
+                <button class="action-btn" id="hideUIBtn" onclick="toggleUIHide()">
+                    <div class="icon-wrap">👁️</div>
+                    <span>Hide UI</span>
+                </button>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="control-row">
-                <div class="file-upload-wrapper">
-                    <button class="primary">📸 Load Reference Image</button>
-                    <input type="file" id="image-upload" accept="image/*">
-                </div>
-            </div>
+        <!-- Preview thumbnail -->
+        <img id="previewThumb" class="preview-thumb" onclick="openUpload()" style="position:absolute;bottom:180px;left:16px;z-index:20;">
+    </div>
 
-            <div class="control-row">
-                <div class="control-col">
-                    <label>Opacity</label>
-                    <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.5">
-                </div>
-                <div class="control-col">
-                    <label>Image Filter</label>
-                    <select id="filter-select">
-                        <option value="none">Normal</option>
-                        <option value="grayscale(100%)">Grayscale</option>
-                        <option value="invert(100%)">Invert</option>
-                        <option value="sepia(100%)">Sepia</option>
-                    </select>
-                </div>
+    <!-- Upload Modal -->
+    <div id="uploadModal">
+        <div class="modal-card">
+            <div class="modal-title">📸 Load Reference</div>
+            <div class="modal-desc">Choose an image to overlay on your camera feed as a drawing guide</div>
+            <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📂</div>
+                <div class="text">Tap to Select Image</div>
+                <div class="subtext">JPG, PNG, WebP supported</div>
             </div>
-
-            <div class="btn-group">
-                <button id="lock-btn">🔓 Lock Canvas</button>
-                <button id="reset-btn">🔄 Reset Shape</button>
-            </div>
+            <button class="modal-close-btn" onclick="closeUpload()">Cancel</button>
         </div>
     </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal">
+        <div class="help-sheet">
+            <div class="handle"></div>
+            <div class="help-title">How to Use</div>
+
+            <div class="help-step">
+                <div class="num">1</div>
+                <div class="content">
+                    <h4>Load Reference Image</h4>
+                    <p>Tap the Image button to upload a drawing reference from your gallery.</p>
+                </div>
+            </div>
+
+            <div class="help-step">
+                <div class="num">2</div>
+                <div class="content">
+                    <h4>Position Over Canvas</h4>
+                    <p>Point your camera at your drawing surface. The overlay will appear on screen.</p>
+                </div>
+            </div>
+
+            <div class="help-step">
+                <div class="num">3</div>
+                <div class="content">
+                    <h4>Adjust Perspective</h4>
+                    <p>Tap Corners to show the 4 corner handles. Drag each corner to match your canvas edges in the camera view.</p>
+                </div>
+            </div>
+
+            <div class="help-step">
+                <div class="num">4</div>
+                <div class="content">
+                    <h4>Fine-tune Opacity</h4>
+                    <p>Use the opacity slider to blend the overlay so you can see both the reference and your drawing.</p>
+                </div>
+            </div>
+
+            <div class="help-step">
+                <div class="num">5</div>
+                <div class="content">
+                    <h4>Choose Lens / Zoom</h4>
+                    <p>Use the Lens button to pick different zoom levels. On Galaxy S23 Ultra, try 3x for detailed work.</p>
+                </div>
+            </div>
+
+            <div class="help-step">
+                <div class="num">6</div>
+                <div class="content">
+                    <h4>Lock & Draw</h4>
+                    <p>Lock corners when positioned, use Hide UI for a clean view, then trace your drawing!</p>
+                </div>
+            </div>
+
+            <button class="modal-close-btn" onclick="closeHelp()" style="margin-top:16px;">Got It!</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <!-- File Input -->
+    <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
 
     <script>
-        // DOM Elements
-        const video = document.getElementById('camera-feed');
-        const cameraSelect = document.getElementById('camera-select');
-        const zoomContainer = document.getElementById('zoom-container');
-        const zoomSlider = document.getElementById('zoom-slider');
-        const imageUpload = document.getElementById('image-upload');
-        const opacitySlider = document.getElementById('opacity-slider');
-        const filterSelect = document.getElementById('filter-select');
-        const overlayImage = document.getElementById('overlay-image');
-        const container = document.getElementById('perspective-container');
-        const lockBtn = document.getElementById('lock-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const toggleHudBtn = document.getElementById('toggle-hud-btn');
-        const hudContainer = document.getElementById('hud-container');
-        const body = document.getElementById('app-body');
-        
-        const corners = [
-            document.getElementById('pt0'), document.getElementById('pt1'),
-            document.getElementById('pt2'), document.getElementById('pt3')
-        ];
+        // ===== STATE =====
+        const state = {
+            stream: null,
+            overlayImage: null,
+            overlayLoaded: false,
+            opacity: 0.5,
+            scale: 1.0,
+            flipH: false,
+            flipV: false,
+            rotation: 0,
+            invert: false,
+            perspectiveMode: false,
+            cornersLocked: false,
+            uiHidden: false,
+            currentZoom: 1,
+            facingMode: 'environment',
+            corners: null, // will be set after image load
+            activeCorner: -1,
+            currentTrack: null,
+            zoomCapabilities: null,
+        };
 
-        let isLocked = false;
-        let isHudVisible = true;
-        let currentStream = null;
-        let imageTrack = null;
+        const W = () => window.innerWidth;
+        const H = () => window.innerHeight;
 
-        // --- Camera & Zoom Logic ---
-        async function initCameras() {
+        // ===== INIT =====
+        function startApp() {
+            document.getElementById('splashScreen').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('splashScreen').style.display = 'none';
+                document.getElementById('appContainer').classList.add('active');
+                initCamera();
+            }, 600);
+        }
+
+        // ===== CAMERA =====
+        async function initCamera() {
             try {
-                // Initial request to get permissions
-                await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                
-                cameraSelect.innerHTML = '';
-                
-                // Advanced label parsing for better UX
-                videoDevices.forEach((device, index) => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    let label = device.label || `Lens ${index + 1}`;
-                    
-                    // Cleanup common messy labels on Android
-                    if(label.toLowerCase().includes('facing back')) {
-                        label = `Back Lens ${index + 1} ` + label.replace(/facing back/i, '').trim();
-                    } else if (label.toLowerCase().includes('facing front')) {
-                        label = `Selfie Camera ${index + 1}`;
-                    }
-                    
-                    option.text = label;
-                    cameraSelect.appendChild(option);
-                });
-                
-                if (videoDevices.length > 0) startCamera(videoDevices[0].deviceId);
+                const constraints = {
+                    video: {
+                        facingMode: state.facingMode,
+                        width: { ideal: 3840 },
+                        height: { ideal: 2160 },
+                    },
+                    audio: false
+                };
+
+                if (state.stream) {
+                    state.stream.getTracks().forEach(t => t.stop());
+                }
+
+                state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('cameraVideo');
+                video.srcObject = state.stream;
+                await video.play();
+
+                state.currentTrack = state.stream.getVideoTracks()[0];
+                const caps = state.currentTrack.getCapabilities();
+                state.zoomCapabilities = caps.zoom || null;
+
+                updateStatus('Camera Active', false);
+                showToast('Camera started successfully');
+
+                // Apply current zoom
+                if (state.zoomCapabilities) {
+                    setZoom(state.currentZoom);
+                    document.getElementById('lensSelector').querySelectorAll('.lens-btn').forEach(btn => {
+                        const z = parseFloat(btn.dataset.zoom);
+                        if (z > (state.zoomCapabilities.max || 10)) {
+                            btn.style.opacity = '0.3';
+                            btn.style.pointerEvents = 'none';
+                        } else {
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'auto';
+                        }
+                    });
+                }
+
+                resizeCanvases();
+                requestAnimationFrame(renderLoop);
+
             } catch (err) {
-                alert('Camera permission required: ' + err.message);
+                console.error('Camera error:', err);
+                updateStatus('Camera Error', true);
+                showToast('Camera access denied. Please allow camera permission.');
             }
         }
 
-        async function startCamera(deviceId) {
-            if (currentStream) currentStream.getTracks().forEach(track => track.stop());
-            
-            const constraints = {
-                video: { 
-                    deviceId: deviceId ? { exact: deviceId } : undefined, 
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
+        async function switchCamera() {
+            state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+            await initCamera();
+            showToast(state.facingMode === 'environment' ? 'Rear camera' : 'Front camera');
+        }
+
+        async function setZoom(zoom, btnEl) {
+            state.currentZoom = zoom;
+
+            if (state.currentTrack && state.zoomCapabilities) {
+                const min = state.zoomCapabilities.min || 1;
+                const max = state.zoomCapabilities.max || 10;
+                const clampedZoom = Math.max(min, Math.min(max, zoom));
+
+                try {
+                    await state.currentTrack.applyConstraints({
+                        advanced: [{ zoom: clampedZoom }]
+                    });
+                } catch (e) {
+                    console.log('Zoom not supported:', e);
+                    showToast('This zoom level may not be available');
                 }
+            }
+
+            document.querySelectorAll('.lens-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) {
+                btnEl.classList.add('active');
+            } else {
+                document.querySelectorAll('.lens-btn').forEach(b => {
+                    if (parseFloat(b.dataset.zoom) === zoom) b.classList.add('active');
+                });
+            }
+        }
+
+        // ===== CANVAS RESIZE =====
+        function resizeCanvases() {
+            const overlayCanvas = document.getElementById('overlayCanvas');
+            const edgeCanvas = document.getElementById('edgeCanvas');
+            overlayCanvas.width = W();
+            overlayCanvas.height = H();
+            edgeCanvas.width = W();
+            edgeCanvas.height = H();
+
+            if (state.overlayLoaded && !state.corners) {
+                setDefaultCorners();
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+
+        // ===== FILE HANDLING =====
+        function openUpload() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function closeUpload() {
+            document.getElementById('uploadModal').classList.remove('active');
+        }
+
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const img = new Image();
+                img.onload = function () {
+                    state.overlayImage = img;
+                    state.overlayLoaded = true;
+                    state.flipH = false;
+                    state.flipV = false;
+                    state.rotation = 0;
+                    state.invert = false;
+                    state.scale = 1.0;
+                    document.getElementById('scaleRange').value = 100;
+                    document.getElementById('scaleValue').textContent = '100%';
+                    setDefaultCorners();
+                    closeUpload();
+
+                    // Show UI elements
+                    document.getElementById('opacitySlider').classList.add('visible');
+                    document.getElementById('scaleSlider').classList.add('visible');
+                    document.getElementById('transformRow').classList.add('visible');
+
+                    // Preview thumb
+                    const thumb = document.getElementById('previewThumb');
+                    thumb.src = ev.target.result;
+                    thumb.classList.add('visible');
+
+                    showToast('Image loaded! Use Corners to adjust perspective');
+                    updateStatus('Overlay Active', false);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+
+        function setDefaultCorners() {
+            if (!state.overlayImage) return;
+            const w = W();
+            const h = H();
+            const imgAspect = state.overlayImage.width / state.overlayImage.height;
+            const screenAspect = w / h;
+
+            let iw, ih;
+            if (imgAspect > screenAspect) {
+                iw = w * 0.8;
+                ih = iw / imgAspect;
+            } else {
+                ih = h * 0.6;
+                iw = ih * imgAspect;
+            }
+
+            const cx = w / 2;
+            const cy = h / 2;
+
+            state.corners = [
+                { x: cx - iw / 2, y: cy - ih / 2 }, // TL
+                { x: cx + iw / 2, y: cy - ih / 2 }, // TR
+                { x: cx + iw / 2, y: cy + ih / 2 }, // BR
+                { x: cx - iw / 2, y: cy + ih / 2 }, // BL
+            ];
+
+            updateCornerHandles();
+        }
+
+        // ===== PERSPECTIVE & RENDERING =====
+        function renderLoop() {
+            if (state.overlayLoaded) {
+                drawOverlay();
+                drawEdges();
+            }
+            requestAnimationFrame(renderLoop);
+        }
+
+        function drawOverlay() {
+            const canvas = document.getElementById('overlayCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!state.overlayImage || !state.corners) return;
+
+            ctx.save();
+            ctx.globalAlpha = state.opacity;
+
+            // Use perspective (projective) texture mapping via triangulation
+            const img = state.overlayImage;
+
+            // Create an offscreen canvas to apply flip/rotate/invert
+            const offscreen = document.createElement('canvas');
+            let sw = img.width;
+            let sh = img.height;
+
+            // Handle rotation
+            const rot = state.rotation % 4;
+            if (rot === 1 || rot === 3) {
+                offscreen.width = sh;
+                offscreen.height = sw;
+            } else {
+                offscreen.width = sw;
+                offscreen.height = sh;
+            }
+
+            const octx = offscreen.getContext('2d');
+            octx.save();
+
+            // Move to center
+            octx.translate(offscreen.width / 2, offscreen.height / 2);
+
+            // Rotation
+            octx.rotate((rot * Math.PI) / 2);
+
+            // Flip
+            const scaleX = state.flipH ? -1 : 1;
+            const scaleY = state.flipV ? -1 : 1;
+            octx.scale(scaleX, scaleY);
+
+            // Draw centered
+            octx.drawImage(img, -sw / 2, -sh / 2, sw, sh);
+            octx.restore();
+
+            // Invert
+            if (state.invert) {
+                octx.globalCompositeOperation = 'difference';
+                octx.fillStyle = 'white';
+                octx.fillRect(0, 0, offscreen.width, offscreen.height);
+                octx.globalCompositeOperation = 'source-over';
+            }
+
+            const srcImg = offscreen;
+            const c = state.corners;
+
+            // Subdivided perspective mapping using triangulation
+            // We split the quad into a grid and map each cell
+            const subdivisions = 12;
+
+            for (let i = 0; i < subdivisions; i++) {
+                for (let j = 0; j < subdivisions; j++) {
+                    const u0 = i / subdivisions;
+                    const v0 = j / subdivisions;
+                    const u1 = (i + 1) / subdivisions;
+                    const v1 = (j + 1) / subdivisions;
+
+                    // Bilinear interpolation for destination points
+                    const p00 = bilerp(c, u0, v0);
+                    const p10 = bilerp(c, u1, v0);
+                    const p11 = bilerp(c, u1, v1);
+                    const p01 = bilerp(c, u0, v1);
+
+                    // Source coords
+                    const sx0 = u0 * srcImg.width;
+                    const sy0 = v0 * srcImg.height;
+                    const sx1 = u1 * srcImg.width;
+                    const sy1 = v1 * srcImg.height;
+
+                    // Draw two triangles per quad cell
+                    drawTriangle(ctx, srcImg,
+                        sx0, sy0, sx1, sy0, sx0, sy1,
+                        p00.x, p00.y, p10.x, p10.y, p01.x, p01.y
+                    );
+                    drawTriangle(ctx, srcImg,
+                        sx1, sy0, sx1, sy1, sx0, sy1,
+                        p10.x, p10.y, p11.x, p11.y, p01.x, p01.y
+                    );
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function bilerp(corners, u, v) {
+            const top = {
+                x: corners[0].x + (corners[1].x - corners[0].x) * u,
+                y: corners[0].y + (corners[1].y - corners[0].y) * u,
+            };
+            const bot = {
+                x: corners[3].x + (corners[2].x - corners[3].x) * u,
+                y: corners[3].y + (corners[2].y - corners[3].y) * u,
+            };
+            return {
+                x: top.x + (bot.x - top.x) * v,
+                y: top.y + (bot.y - top.y) * v,
+            };
+        }
+
+        function drawTriangle(ctx, img, sx0, sy0, sx1, sy1, sx2, sy2, dx0, dy0, dx1, dy1, dx2, dy2) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(dx0, dy0);
+            ctx.lineTo(dx1, dy1);
+            ctx.lineTo(dx2, dy2);
+            ctx.closePath();
+            ctx.clip();
+
+            // Affine transform from source triangle to dest triangle
+            // We need to solve for the affine matrix
+            const denom = (sx0 * (sy1 - sy2) + sx1 * (sy2 - sy0) + sx2 * (sy0 - sy1));
+            if (Math.abs(denom) < 0.001) {
+                ctx.restore();
+                return;
+            }
+
+            const m11 = (dx0 * (sy1 - sy2) + dx1 * (sy2 - sy0) + dx2 * (sy0 - sy1)) / denom;
+            const m12 = (dx0 * (sx2 - sx1) + dx1 * (sx0 - sx2) + dx2 * (sx1 - sx0)) / denom;
+            const m13 = (dx0 * (sx1 * sy2 - sx2 * sy1) + dx1 * (sx2 * sy0 - sx0 * sy2) + dx2 * (sx0 * sy1 - sx1 * sy0)) / denom;
+            const m21 = (dy0 * (sy1 - sy2) + dy1 * (sy2 - sy0) + dy2 * (sy0 - sy1)) / denom;
+            const m22 = (dy0 * (sx2 - sx1) + dy1 * (sx0 - sx2) + dy2 * (sx1 - sx0)) / denom;
+            const m23 = (dy0 * (sx1 * sy2 - sx2 * sy1) + dy1 * (sx2 * sy0 - sx0 * sy2) + dy2 * (sx0 * sy1 - sx1 * sy0)) / denom;
+
+            ctx.setTransform(m11, m21, m12, m22, m13, m23);
+            ctx.drawImage(img, 0, 0);
+            ctx.restore();
+        }
+
+        function drawEdges() {
+            const canvas = document.getElementById('edgeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!state.corners || !state.perspectiveMode) return;
+
+            const c = state.corners;
+
+            ctx.strokeStyle = state.cornersLocked ? 'rgba(255,107,107,0.7)' : 'rgba(0,206,201,0.8)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 6]);
+
+            ctx.beginPath();
+            ctx.moveTo(c[0].x, c[0].y);
+            ctx.lineTo(c[1].x, c[1].y);
+            ctx.lineTo(c[2].x, c[2].y);
+            ctx.lineTo(c[3].x, c[3].y);
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+
+            // Draw diagonals faintly
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(c[0].x, c[0].y);
+            ctx.lineTo(c[2].x, c[2].y);
+            ctx.moveTo(c[1].x, c[1].y);
+            ctx.lineTo(c[3].x, c[3].y);
+            ctx.stroke();
+        }
+
+        // ===== CORNER HANDLES =====
+        function updateCornerHandles() {
+            if (!state.corners) return;
+            for (let i = 0; i < 4; i++) {
+                const el = document.getElementById('corner' + i);
+                el.style.left = (state.corners[i].x - 22) + 'px';
+                el.style.top = (state.corners[i].y - 22) + 'px';
+            }
+        }
+
+        function showCorners(show) {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('corner' + i).style.display = show ? 'block' : 'none';
+            }
+            document.getElementById('resetPerspBtn').style.display = show ? 'block' : 'none';
+        }
+
+        // ===== TOUCH HANDLING FOR CORNERS =====
+        let touchStartCorner = -1;
+        let touchOffset = { x: 0, y: 0 };
+
+        function initCornerDrag() {
+            for (let i = 0; i < 4; i++) {
+                const el = document.getElementById('corner' + i);
+
+                el.addEventListener('touchstart', function (e) {
+                    if (state.cornersLocked) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    touchStartCorner = i;
+                    const touch = e.touches[0];
+                    touchOffset.x = touch.clientX - state.corners[i].x;
+                    touchOffset.y = touch.clientY - state.corners[i].y;
+                }, { passive: false });
+
+                el.addEventListener('touchmove', function (e) {
+                    if (state.cornersLocked || touchStartCorner !== i) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const touch = e.touches[0];
+                    state.corners[i].x = touch.clientX - touchOffset.x;
+                    state.corners[i].y = touch.clientY - touchOffset.y;
+
+                    // Clamp
+                    state.corners[i].x = Math.max(0, Math.min(W(), state.corners[i].x));
+                    state.corners[i].y = Math.max(0, Math.min(H(), state.corners[i].y));
+
+                    updateCornerHandles();
+                }, { passive: false });
+
+                el.addEventListener('touchend', function (e) {
+                    touchStartCorner = -1;
+                }, { passive: false });
+            }
+        }
+
+        initCornerDrag();
+
+        // ===== UI CONTROLS =====
+        function updateOpacity(val) {
+            state.opacity = val / 100;
+            document.getElementById('opacityValue').textContent = val + '%';
+        }
+
+        function updateScale(val) {
+            const newScale = val / 100;
+            if (!state.corners || !state.overlayImage) {
+                state.scale = newScale;
+                document.getElementById('scaleValue').textContent = val + '%';
+                return;
+            }
+
+            // Scale corners relative to center
+            const center = {
+                x: (state.corners[0].x + state.corners[1].x + state.corners[2].x + state.corners[3].x) / 4,
+                y: (state.corners[0].y + state.corners[1].y + state.corners[2].y + state.corners[3].y) / 4,
             };
 
-            try {
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = currentStream;
-                
-                // Check for hardware zoom capabilities
-                const track = currentStream.getVideoTracks()[0];
-                imageTrack = track;
-                
-                // Wait a moment for capabilities to populate on some devices
-                setTimeout(() => {
-                    const capabilities = track.getCapabilities();
-                    if (capabilities.zoom) {
-                        zoomContainer.style.display = 'flex';
-                        zoomSlider.min = capabilities.zoom.min;
-                        zoomSlider.max = capabilities.zoom.max;
-                        zoomSlider.step = capabilities.zoom.step;
-                        zoomSlider.value = track.getSettings().zoom || 1;
-                    } else {
-                        zoomContainer.style.display = 'none';
-                    }
-                }, 500);
+            const ratio = newScale / state.scale;
 
-            } catch (err) {
-                console.error('Camera Error: ', err);
-                alert('Could not start selected camera.');
+            for (let i = 0; i < 4; i++) {
+                state.corners[i].x = center.x + (state.corners[i].x - center.x) * ratio;
+                state.corners[i].y = center.y + (state.corners[i].y - center.y) * ratio;
+            }
+
+            state.scale = newScale;
+            document.getElementById('scaleValue').textContent = val + '%';
+            updateCornerHandles();
+        }
+
+        function togglePerspective() {
+            state.perspectiveMode = !state.perspectiveMode;
+            const btn = document.getElementById('perspectiveBtn');
+            btn.classList.toggle('active', state.perspectiveMode);
+            showCorners(state.perspectiveMode && state.overlayLoaded);
+
+            if (state.perspectiveMode) {
+                showToast('Drag corners to match your canvas');
             }
         }
 
-        cameraSelect.addEventListener('change', (e) => startCamera(e.target.value));
-        
-        zoomSlider.addEventListener('input', (e) => {
-            if (imageTrack) {
-                imageTrack.applyConstraints({ advanced: [{ zoom: parseFloat(e.target.value) }] })
-                .catch(err => console.log('Zoom not supported on this lens', err));
-            }
-        });
+        function toggleLock() {
+            state.cornersLocked = !state.cornersLocked;
+            const btn = document.getElementById('lockBtn');
+            const badge = document.getElementById('lockBadge');
 
-        initCameras();
-
-        // --- HUD Toggle Logic ---
-        toggleHudBtn.addEventListener('click', () => {
-            isHudVisible = !isHudVisible;
-            if(isHudVisible) {
-                hudContainer.classList.remove('hidden');
-                body.classList.remove('hide-corners');
-                toggleHudBtn.innerText = '👁️';
-                toggleHudBtn.style.opacity = '1';
+            if (state.cornersLocked) {
+                btn.classList.add('active');
+                btn.querySelector('.icon-wrap').textContent = '🔒';
+                badge.classList.add('visible');
+                showToast('Corners locked');
             } else {
-                hudContainer.classList.add('hidden');
-                body.classList.add('hide-corners');
-                toggleHudBtn.innerText = '👁️‍🗨️';
-                toggleHudBtn.style.opacity = '0.5';
+                btn.classList.remove('active');
+                btn.querySelector('.icon-wrap').textContent = '🔓';
+                badge.classList.remove('visible');
+                showToast('Corners unlocked');
             }
-        });
-
-        // --- Image Controls ---
-        opacitySlider.addEventListener('input', (e) => overlayImage.style.opacity = e.target.value);
-        filterSelect.addEventListener('change', (e) => overlayImage.style.filter = e.target.value);
-
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    overlayImage.src = event.target.result;
-                    resetCorners();
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        lockBtn.addEventListener('click', () => {
-            isLocked = !isLocked;
-            lockBtn.innerHTML = isLocked ? '🔒 Unlock Canvas' : '🔓 Lock Canvas';
-            lockBtn.classList.toggle('primary', isLocked);
-            corners.forEach(c => c.classList.toggle('locked', isLocked));
-        });
-
-        resetBtn.addEventListener('click', () => { if(!isLocked) resetCorners(); });
-
-        // --- Perspective Transform Logic (Homography) ---
-        const imgW = 600, imgH = 600; 
-        let points = [];
-
-        function resetCorners() {
-            const w = window.innerWidth, h = window.innerHeight;
-            // Create a nice rectangle in the center
-            const paddingW = w * 0.15, paddingH = h * 0.25;
-            points = [
-                {x: paddingW, y: paddingH}, {x: w - paddingW, y: paddingH}, 
-                {x: w - paddingW, y: h - paddingH}, {x: paddingW, y: h - paddingH}
-            ];
-            
-            corners.forEach((corner, i) => {
-                corner.style.display = 'block';
-                corner.style.left = points[i].x + 'px';
-                corner.style.top = points[i].y + 'px';
-            });
-            updateTransform();
         }
 
-        // Gaussian Elimination
-        function solve(A, b) {
-            const n = A.length;
-            for (let i = 0; i < n; i++) A[i].push(b[i]);
-            for (let i = 0; i < n; i++) {
-                let maxEl = Math.abs(A[i][i]), maxRow = i;
-                for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > maxEl) { maxEl = Math.abs(A[k][i]); maxRow = k; }
-                for (let k = i; k < n + 1; k++) { let tmp = A[maxRow][k]; A[maxRow][k] = A[i][k]; A[i][k] = tmp; }
-                for (let k = i + 1; k < n; k++) {
-                    let c = -A[k][i] / A[i][i];
-                    for (let j = i; j < n + 1; j++) { if (i === j) A[k][j] = 0; else A[k][j] += c * A[i][j]; }
+        function toggleLensSelector() {
+            const sel = document.getElementById('lensSelector');
+            const btn = document.getElementById('lensToggle');
+            sel.classList.toggle('visible');
+            btn.classList.toggle('active');
+        }
+
+        function resetPerspective() {
+            setDefaultCorners();
+            updateCornerHandles();
+            state.scale = 1.0;
+            document.getElementById('scaleRange').value = 100;
+            document.getElementById('scaleValue').textContent = '100%';
+            showToast('Corners reset to default');
+        }
+
+        function flipImage(dir) {
+            if (dir === 'h') state.flipH = !state.flipH;
+            if (dir === 'v') state.flipV = !state.flipV;
+            showToast(dir === 'h' ? 'Flipped horizontally' : 'Flipped vertically');
+        }
+
+        function rotateImage() {
+            state.rotation = (state.rotation + 1) % 4;
+            showToast('Rotated ' + (state.rotation * 90) + '°');
+        }
+
+        function toggleInvert() {
+            state.invert = !state.invert;
+            showToast(state.invert ? 'Colors inverted' : 'Normal colors');
+        }
+
+        function toggleUIHide() {
+            state.uiHidden = !state.uiHidden;
+            const elements = ['topBar', 'bottomPanel', 'lensSelector', 'resetPerspBtn', 'lockBadge', 'previewThumb'];
+            const btn = document.getElementById('hideUIBtn');
+
+            if (state.uiHidden) {
+                elements.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.opacity = '0';
+                });
+                // Show a small button to restore
+                showCorners(false);
+                showToast('Tap anywhere to show UI');
+
+                // Listen for tap to restore
+                setTimeout(() => {
+                    document.getElementById('appContainer').addEventListener('touchstart', restoreUI, { once: true });
+                }, 500);
+            } else {
+                restoreUI();
+            }
+        }
+
+        function restoreUI() {
+            state.uiHidden = false;
+            const elements = ['topBar', 'bottomPanel', 'previewThumb'];
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.opacity = '1';
+            });
+
+            if (state.perspectiveMode && state.overlayLoaded) {
+                showCorners(true);
+                document.getElementById('resetPerspBtn').style.opacity = '1';
+            }
+            if (state.cornersLocked) {
+                const lb = document.getElementById('lockBadge');
+                lb.style.opacity = '1';
+            }
+
+            const btn = document.getElementById('hideUIBtn');
+            btn.classList.remove('active');
+        }
+
+        // ===== HELP =====
+        function toggleHelp() {
+            document.getElementById('helpModal').classList.toggle('active');
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').classList.remove('active');
+        }
+
+        // Close help by tapping backdrop
+        document.getElementById('helpModal').addEventListener('click', function (e) {
+            if (e.target === this) closeHelp();
+        });
+
+        document.getElementById('uploadModal').addEventListener('click', function (e) {
+            if (e.target === this) closeUpload();
+        });
+
+        // ===== STATUS =====
+        function updateStatus(text, warning) {
+            document.getElementById('statusText').textContent = text;
+            const dot = document.getElementById('statusDot');
+            if (warning) {
+                dot.classList.add('warning');
+            } else {
+                dot.classList.remove('warning');
+            }
+        }
+
+        // ===== TOAST =====
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('visible');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2500);
+        }
+
+        // ===== MULTI-TOUCH: Move entire overlay when no corner is being dragged =====
+        let panState = null;
+
+        document.getElementById('overlayCanvas').addEventListener('touchstart', function (e) {
+            if (state.cornersLocked || state.perspectiveMode || !state.overlayLoaded || !state.corners) return;
+
+            if (e.touches.length === 1) {
+                // Check if touch is inside the quad for panning
+                const t = e.touches[0];
+                if (isInsideQuad(t.clientX, t.clientY, state.corners)) {
+                    e.preventDefault();
+                    panState = {
+                        startX: t.clientX,
+                        startY: t.clientY,
+                        cornersSnapshot: state.corners.map(c => ({ ...c })),
+                    };
                 }
             }
-            let x = new Array(n);
-            for (let i = n - 1; i > -1; i--) {
-                x[i] = A[i][n] / A[i][i];
-                for (let k = i - 1; k > -1; k--) A[k][n] -= A[k][i] * x[i];
-            }
-            return x;
-        }
+        }, { passive: false });
 
-        function updateTransform() {
-            if(points.length === 0) return;
-            const src = [ {x:0,y:0}, {x:imgW,y:0}, {x:imgW,y:imgH}, {x:0,y:imgH} ];
-            const dst = points;
+        document.getElementById('overlayCanvas').addEventListener('touchmove', function (e) {
+            if (!panState || state.cornersLocked) return;
+            e.preventDefault();
+            const t = e.touches[0];
+            const dx = t.clientX - panState.startX;
+            const dy = t.clientY - panState.startY;
 
-            let A = [], b = [];
             for (let i = 0; i < 4; i++) {
-                A.push([src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x]);
-                A.push([0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y]);
-                b.push(dst[i].x); b.push(dst[i].y);
+                state.corners[i].x = panState.cornersSnapshot[i].x + dx;
+                state.corners[i].y = panState.cornersSnapshot[i].y + dy;
             }
-            
-            const h = solve(A, b);
-            const matrix = `matrix3d(${h[0]}, ${h[3]}, 0, ${h[6]}, ${h[1]}, ${h[4]}, 0, ${h[7]}, 0, 0, 1, 0, ${h[2]}, ${h[5]}, 0, 1)`;
-            container.style.transform = matrix;
+            updateCornerHandles();
+        }, { passive: false });
+
+        document.getElementById('overlayCanvas').addEventListener('touchend', function () {
+            panState = null;
+        });
+
+        function isInsideQuad(px, py, corners) {
+            // Simple point-in-polygon for 4 corners
+            let inside = false;
+            const n = corners.length;
+            for (let i = 0, j = n - 1; i < n; j = i++) {
+                const xi = corners[i].x, yi = corners[i].y;
+                const xj = corners[j].x, yj = corners[j].y;
+                if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) {
+                    inside = !inside;
+                }
+            }
+            return inside;
         }
 
-        // --- Dragging Logic ---
-        let activeCorner = null;
+        // ===== Enable pointer events on overlay when NOT in perspective mode =====
+        // (So user can pan the image)
+        function updateOverlayInteractivity() {
+            const oc = document.getElementById('overlayCanvas');
+            if (!state.perspectiveMode && state.overlayLoaded && !state.cornersLocked) {
+                oc.style.pointerEvents = 'auto';
+            } else {
+                oc.style.pointerEvents = 'none';
+            }
+        }
 
-        corners.forEach((corner, index) => {
-            corner.addEventListener('touchstart', (e) => {
-                if(isLocked) return;
-                e.preventDefault();
-                activeCorner = index;
-                corner.style.transform = 'translate(-50%, -50%) scale(1.3)';
-            }, {passive: false});
+        // Patch togglePerspective to also update interactivity
+        const origTogglePerspective = togglePerspective;
+        // Already handled inline
+
+        // ===== KEEP SCREEN AWAKE =====
+        async function keepAwake() {
+            try {
+                if ('wakeLock' in navigator) {
+                    await navigator.wakeLock.request('screen');
+                }
+            } catch (e) {
+                // Silently fail
+            }
+        }
+        keepAwake();
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') keepAwake();
         });
 
-        document.addEventListener('touchmove', (e) => {
-            if (activeCorner !== null && !isLocked) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                points[activeCorner].x = touch.clientX;
-                points[activeCorner].y = touch.clientY;
-                corners[activeCorner].style.left = touch.clientX + 'px';
-                corners[activeCorner].style.top = touch.clientY + 'px';
-                updateTransform();
-            }
-        }, {passive: false});
-
-        document.addEventListener('touchend', () => { 
-            if(activeCorner !== null) {
-                corners[activeCorner].style.transform = 'translate(-50%, -50%) scale(1)';
-                activeCorner = null; 
-            }
-        });
     </script>
 </body>
 </html>
