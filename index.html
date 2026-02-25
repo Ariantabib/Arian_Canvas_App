@@ -39,80 +39,71 @@
             position: fixed;
         }
 
-        /* ===== SPLASH ===== */
+        /* SPLASH */
         #splashScreen {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background: linear-gradient(135deg, var(--darker), var(--dark));
             z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
-        #splashScreen.hidden {
-            opacity: 0;
-            transform: scale(1.1);
-            pointer-events: none;
-        }
+        #splashScreen.hidden { opacity: 0; transform: scale(1.1); pointer-events: none; }
         .splash-icon {
             width: 100px; height: 100px; border-radius: 28px;
             background: linear-gradient(135deg, var(--primary), var(--accent));
             display: flex; align-items: center; justify-content: center;
             font-size: 48px; margin-bottom: 24px;
             box-shadow: 0 20px 60px rgba(108,92,231,0.4);
-            animation: splashPulse 2s ease-in-out infinite;
+            animation: sp 2s ease-in-out infinite;
         }
-        @keyframes splashPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+        @keyframes sp { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
         .splash-title {
             font-size: 28px; font-weight: 700;
             background: linear-gradient(135deg, var(--primary-light), var(--accent));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin-bottom: 8px;
         }
-        .splash-subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 40px; }
+        .splash-sub { color: var(--text-dim); font-size: 14px; margin-bottom: 40px; }
         .splash-btn {
             padding: 16px 48px;
             background: linear-gradient(135deg, var(--primary), #5a4bd1);
             color: white; border: none; border-radius: 50px;
             font-size: 17px; font-weight: 600; cursor: pointer;
             box-shadow: 0 8px 32px rgba(108,92,231,0.4);
-            transition: all 0.3s ease;
         }
         .splash-btn:active { transform: scale(0.95); }
 
-        /* ===== MAIN ===== */
-        #appContainer { position: fixed; inset: 0; display: none; }
-        #appContainer.active { display: block; }
+        /* MAIN */
+        #app { position: fixed; inset: 0; display: none; }
+        #app.active { display: block; }
 
-        #cameraVideo {
+        #cam {
             position: absolute; inset: 0;
             width: 100%; height: 100%;
             object-fit: cover; z-index: 1;
         }
 
-        #overlayCanvas {
+        #overlay {
             position: absolute; inset: 0;
             width: 100%; height: 100%;
             z-index: 2; pointer-events: none;
         }
 
-        #edgeCanvas {
+        #edgeCvs {
             position: absolute; inset: 0;
             width: 100%; height: 100%;
             z-index: 4; pointer-events: none;
         }
 
-        /* ===== CORNER HANDLES ===== */
-        .corner-handle {
+        /* CORNERS */
+        .ch {
             position: absolute;
-            width: 56px; height: 56px;
-            z-index: 50;
-            cursor: move;
+            width: 60px; height: 60px;
+            z-index: 50; cursor: move;
             display: none;
         }
-        .corner-handle .visual {
+        .ch .dot {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%,-50%);
             width: 24px; height: 24px;
@@ -122,24 +113,15 @@
             box-shadow: 0 2px 12px rgba(0,206,201,0.6), 0 0 0 4px rgba(0,206,201,0.2);
             transition: transform 0.15s ease;
         }
-        .corner-handle:active .visual {
+        .ch:active .dot {
             transform: translate(-50%,-50%) scale(1.4);
-            box-shadow: 0 2px 20px rgba(0,206,201,0.8), 0 0 0 8px rgba(0,206,201,0.2);
-        }
-        .corner-handle .label {
-            position: absolute; top: -20px; left: 50%;
-            transform: translateX(-50%);
-            font-size: 9px; color: var(--accent);
-            font-weight: 700; white-space: nowrap;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-            letter-spacing: 0.5px;
+            box-shadow: 0 2px 20px rgba(0,206,201,0.8), 0 0 0 8px rgba(0,206,201,0.15);
         }
 
-        /* ===== TOP STATUS ===== */
+        /* TOP BAR */
         #topBar {
             position: absolute; top: 0; left: 0; right: 0;
-            z-index: 20;
-            padding: 10px 16px;
+            z-index: 20; padding: 10px 16px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
             display: flex; align-items: center; justify-content: center;
             transition: opacity 0.3s ease;
@@ -155,41 +137,57 @@
         .status-dot {
             width: 7px; height: 7px; border-radius: 50%;
             background: var(--success);
-            animation: statusPulse 2s ease-in-out infinite;
+            animation: pulse 2s ease-in-out infinite;
         }
-        .status-dot.warning { background: var(--warning); }
-        @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .status-text { font-size: 11px; font-weight: 600; }
+        .status-dot.warn { background: var(--warning); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .status-txt { font-size: 11px; font-weight: 600; }
 
-        /* ===== BOTTOM PANEL — FULL MODE ===== */
-        #bottomPanel {
+        /* ZOOM PILL */
+        #zoomPill {
+            position: absolute; top: 48px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex; gap: 3px;
+            background: var(--card-bg);
+            border-radius: 50px; padding: 3px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            opacity: 0; pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        #zoomPill.visible { opacity: 1; pointer-events: auto; }
+        .zb {
+            padding: 6px 13px; border-radius: 50px;
+            background: transparent; border: none;
+            color: var(--text-dim);
+            font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .zb.active { background: var(--primary); color: white; }
+        .zb.off { opacity: 0.25; pointer-events: none; }
+
+        /* BOTTOM PANEL */
+        #botPanel {
             position: absolute; bottom: 0; left: 0; right: 0;
             z-index: 20;
             background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
             padding: 16px 16px calc(var(--safe-bottom) + 8px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.3s ease;
         }
-
-        /* Slider rows */
-        .slider-row {
-            display: none;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            padding: 0 2px;
+        .srow {
+            display: none; align-items: center;
+            gap: 10px; margin-bottom: 10px; padding: 0 2px;
         }
-        .slider-row.visible { display: flex; }
-        .slider-label {
+        .srow.vis { display: flex; }
+        .slbl {
             font-size: 10px; font-weight: 700;
-            color: var(--text-dim);
-            min-width: 48px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--text-dim); min-width: 48px;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .slider-val {
+        .sval {
             font-size: 12px; font-weight: 700;
-            color: var(--accent);
-            min-width: 38px; text-align: right;
+            color: var(--accent); min-width: 38px; text-align: right;
         }
         input[type="range"] {
             -webkit-appearance: none; appearance: none;
@@ -203,72 +201,58 @@
             background: white;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 3px rgba(108,92,231,0.3);
         }
-
-        /* Transform row */
-        .transform-row {
-            display: none;
-            justify-content: center;
-            gap: 6px;
-            margin-bottom: 10px;
+        .trow {
+            display: none; justify-content: center;
+            gap: 6px; margin-bottom: 10px;
         }
-        .transform-row.visible { display: flex; }
-        .transform-btn {
+        .trow.vis { display: flex; }
+        .tbtn {
             padding: 6px 12px; border-radius: 50px;
             background: rgba(255,255,255,0.08);
             border: 1px solid rgba(255,255,255,0.1);
             color: var(--text); font-size: 11px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s ease;
-            display: flex; align-items: center; gap: 4px;
+            cursor: pointer; display: flex; align-items: center; gap: 4px;
         }
-        .transform-btn:active { transform: scale(0.95); background: var(--primary); }
+        .tbtn:active { transform: scale(0.95); background: var(--primary); }
 
-        /* Action row */
-        .action-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        .arow {
+            display: flex; align-items: center;
+            justify-content: center; gap: 10px;
         }
-        .action-btn {
+        .abtn {
             display: flex; flex-direction: column;
             align-items: center; gap: 5px;
             background: none; border: none;
-            color: white; cursor: pointer;
-            padding: 6px; transition: all 0.2s ease;
+            color: white; cursor: pointer; padding: 6px;
         }
-        .action-btn:active { transform: scale(0.9); }
-        .action-btn .icon-wrap {
-            width: 48px; height: 48px;
-            border-radius: 50%;
+        .abtn:active { transform: scale(0.9); }
+        .abtn .iw {
+            width: 48px; height: 48px; border-radius: 50%;
             background: var(--card-bg);
             border: 2px solid rgba(255,255,255,0.12);
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-            backdrop-filter: blur(10px);
+            font-size: 20px; backdrop-filter: blur(10px);
             transition: all 0.2s ease;
         }
-        .action-btn.active .icon-wrap {
+        .abtn.on .iw {
             background: var(--primary);
             border-color: var(--primary-light);
             box-shadow: 0 4px 16px rgba(108,92,231,0.4);
         }
-        .action-btn span {
+        .abtn span {
             font-size: 9px; font-weight: 700;
             color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            text-transform: uppercase; letter-spacing: 0.3px;
         }
-        .action-btn.active span { color: var(--primary-light); }
+        .abtn.on span { color: var(--primary-light); }
 
-        /* ===== MINIMAL FLOATING BAR (when editing corners) ===== */
+        /* MINI BAR */
         #miniBar {
             position: absolute;
             bottom: calc(var(--safe-bottom) + 8px);
             left: 12px; right: 12px;
             z-index: 30;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
+            display: none; flex-direction: column; gap: 8px;
             background: var(--card-bg);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255,255,255,0.1);
@@ -276,61 +260,82 @@
             padding: 12px 14px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-        #miniBar.visible { display: flex; }
+        #miniBar.vis { display: flex; }
 
-        .mini-slider-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .msr {
+            display: flex; align-items: center; gap: 8px;
         }
-        .mini-label {
+        .ml {
             font-size: 9px; font-weight: 700;
-            color: var(--text-dim);
-            min-width: 20px;
+            color: var(--text-dim); min-width: 20px;
             text-transform: uppercase;
         }
-        .mini-val {
+        .mv {
             font-size: 11px; font-weight: 700;
-            color: var(--accent);
-            min-width: 34px; text-align: right;
+            color: var(--accent); min-width: 34px; text-align: right;
         }
-
-        .mini-actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
+        .ma {
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 6px;
         }
-        .mini-btn {
-            flex: 1;
-            padding: 9px 0;
-            border-radius: 12px;
+        .mb {
+            flex: 1; padding: 9px 0; border-radius: 12px;
             background: rgba(255,255,255,0.08);
             border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text);
-            font-size: 11px; font-weight: 700;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s ease;
+            color: var(--text); font-size: 11px; font-weight: 700;
+            cursor: pointer; text-align: center;
         }
-        .mini-btn:active { transform: scale(0.95); }
-        .mini-btn.primary-btn {
-            background: var(--primary);
-            border-color: var(--primary-light);
-            color: white;
-        }
-        .mini-btn.danger-btn {
-            background: rgba(255,107,107,0.15);
-            border-color: rgba(255,107,107,0.3);
-            color: var(--danger);
-        }
-        .mini-btn.lock-btn.locked {
+        .mb:active { transform: scale(0.95); }
+        .mb.pri { background: var(--primary); border-color: var(--primary-light); color: white; }
+        .mb.lck.locked {
             background: rgba(255,107,107,0.2);
             border-color: rgba(255,107,107,0.3);
             color: var(--danger);
         }
 
-        /* ===== UPLOAD MODAL ===== */
+        /* HIDE-ALL BUTTON */
+        #hideAllBtn {
+            position: absolute;
+            top: 10px; right: 12px;
+            z-index: 60;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+        #hideAllBtn:active { transform: scale(0.9); }
+
+        /* RESTORE TAP ZONE (invisible, full screen) */
+        #restoreZone {
+            position: fixed; inset: 0;
+            z-index: 55;
+            display: none;
+        }
+        #restoreZone.vis { display: block; }
+
+        /* Small restore hint */
+        #restoreHint {
+            position: fixed;
+            bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 56;
+            padding: 8px 20px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 50px;
+            color: rgba(255,255,255,0.5);
+            font-size: 11px; font-weight: 600;
+            display: none;
+            pointer-events: none;
+        }
+        #restoreHint.vis { display: block; }
+
+        /* UPLOAD MODAL */
         #uploadModal {
             position: fixed; inset: 0; z-index: 100;
             background: rgba(0,0,0,0.8);
@@ -340,7 +345,7 @@
             padding: 24px;
         }
         #uploadModal.active { display: flex; }
-        .modal-card {
+        .mcard {
             background: var(--dark);
             border-radius: 24px;
             padding: 32px 24px;
@@ -348,34 +353,32 @@
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 24px 80px rgba(0,0,0,0.5);
         }
-        .modal-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 8px; }
-        .modal-desc {
+        .mtitle { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+        .mdesc {
             font-size: 13px; color: var(--text-dim);
             text-align: center; margin-bottom: 28px; line-height: 1.5;
         }
-        .upload-zone {
+        .uzone {
             border: 2px dashed rgba(108,92,231,0.4);
-            border-radius: 16px;
-            padding: 40px 20px;
+            border-radius: 16px; padding: 40px 20px;
             text-align: center; cursor: pointer;
-            transition: all 0.3s ease;
             background: rgba(108,92,231,0.05);
             margin-bottom: 20px;
         }
-        .upload-zone:active { border-color: var(--primary); background: rgba(108,92,231,0.1); }
-        .upload-zone .icon { font-size: 48px; margin-bottom: 12px; }
-        .upload-zone .text { font-size: 15px; font-weight: 600; color: var(--primary-light); }
-        .upload-zone .subtext { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
-        .modal-close-btn {
+        .uzone:active { border-color: var(--primary); background: rgba(108,92,231,0.1); }
+        .uzone .icon { font-size: 48px; margin-bottom: 12px; }
+        .uzone .text { font-size: 15px; font-weight: 600; color: var(--primary-light); }
+        .uzone .sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+        .mclose {
             width: 100%; padding: 14px; border-radius: 12px;
             background: rgba(255,255,255,0.08);
             border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-dim); font-size: 15px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s ease;
+            cursor: pointer;
         }
-        .modal-close-btn:active { background: rgba(255,255,255,0.15); }
+        .mclose:active { background: rgba(255,255,255,0.15); }
 
-        /* ===== TOAST ===== */
+        /* TOAST */
         #toast {
             position: fixed; top: 56px; left: 50%;
             transform: translateX(-50%) translateY(-20px);
@@ -389,235 +392,189 @@
             transition: all 0.3s ease;
             text-align: center; max-width: 90%;
         }
-        #toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.vis { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        #fileInput { display: none; }
-
-        /* ===== ZOOM INDICATOR ===== */
-        #zoomPill {
-            position: absolute;
-            top: 48px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
-            display: flex; gap: 3px;
-            background: var(--card-bg);
-            border-radius: 50px;
-            padding: 3px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.08);
-            opacity: 0; pointer-events: none;
-            transition: all 0.3s ease;
-        }
-        #zoomPill.visible { opacity: 1; pointer-events: auto; }
-        .zoom-btn {
-            padding: 6px 13px; border-radius: 50px;
-            background: transparent; border: none;
-            color: var(--text-dim);
-            font-size: 12px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .zoom-btn.active { background: var(--primary); color: white; }
-        .zoom-btn.disabled { opacity: 0.25; pointer-events: none; }
+        #fileIn { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- SPLASH -->
-    <div id="splashScreen">
-        <div class="splash-icon">🎨</div>
-        <div class="splash-title">AR Draw Assist</div>
-        <div class="splash-subtitle">Trace & draw with camera overlay</div>
-        <button class="splash-btn" onclick="startApp()">Get Started</button>
-    </div>
+<div id="splashScreen">
+    <div class="splash-icon">🎨</div>
+    <div class="splash-title">AR Draw Assist</div>
+    <div class="splash-sub">Trace & draw with camera overlay</div>
+    <button class="splash-btn" onclick="startApp()">Get Started</button>
+</div>
 
-    <!-- APP -->
-    <div id="appContainer">
-        <video id="cameraVideo" autoplay playsinline muted></video>
-        <canvas id="overlayCanvas"></canvas>
-        <canvas id="edgeCanvas"></canvas>
+<div id="app">
+    <video id="cam" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <canvas id="edgeCvs"></canvas>
 
-        <!-- Corners -->
-        <div class="corner-handle" id="corner0"><div class="label">TL</div><div class="visual"></div></div>
-        <div class="corner-handle" id="corner1"><div class="label">TR</div><div class="visual"></div></div>
-        <div class="corner-handle" id="corner2"><div class="label">BR</div><div class="visual"></div></div>
-        <div class="corner-handle" id="corner3"><div class="label">BL</div><div class="visual"></div></div>
+    <div class="ch" id="c0"><div class="dot"></div></div>
+    <div class="ch" id="c1"><div class="dot"></div></div>
+    <div class="ch" id="c2"><div class="dot"></div></div>
+    <div class="ch" id="c3"><div class="dot"></div></div>
 
-        <!-- Top -->
-        <div id="topBar">
-            <div class="status-pill">
-                <div class="status-dot" id="statusDot"></div>
-                <span class="status-text" id="statusText">Starting…</span>
-            </div>
-        </div>
-
-        <!-- Zoom selector -->
-        <div id="zoomPill">
-            <button class="zoom-btn active" data-zoom="1" onclick="setZoom(1,this)">1×</button>
-            <button class="zoom-btn" data-zoom="2" onclick="setZoom(2,this)">2×</button>
-            <button class="zoom-btn" data-zoom="3" onclick="setZoom(3,this)">3×</button>
-            <button class="zoom-btn" data-zoom="5" onclick="setZoom(5,this)">5×</button>
-            <button class="zoom-btn" data-zoom="10" onclick="setZoom(10,this)">10×</button>
-        </div>
-
-        <!-- Bottom Panel (normal mode) -->
-        <div id="bottomPanel">
-            <div class="slider-row" id="opacityRow">
-                <span class="slider-label">Opacity</span>
-                <input type="range" id="opacityRange" min="0" max="100" value="50" oninput="setOpacity(this.value)">
-                <span class="slider-val" id="opacityVal">50%</span>
-            </div>
-            <div class="slider-row" id="scaleRow">
-                <span class="slider-label">Scale</span>
-                <input type="range" id="scaleRange" min="10" max="300" value="100" oninput="setScale(this.value)">
-                <span class="slider-val" id="scaleVal">100%</span>
-            </div>
-            <div class="transform-row" id="transformRow">
-                <button class="transform-btn" onclick="flipImg('h')">↔ Flip H</button>
-                <button class="transform-btn" onclick="flipImg('v')">↕ Flip V</button>
-                <button class="transform-btn" onclick="rotateImg()">⟳ Rotate</button>
-                <button class="transform-btn" onclick="toggleInvert()">◑ Invert</button>
-            </div>
-            <div class="action-row">
-                <button class="action-btn" onclick="openUpload()">
-                    <div class="icon-wrap">🖼️</div><span>Image</span>
-                </button>
-                <button class="action-btn" id="cornersBtn" onclick="enterCornerMode()">
-                    <div class="icon-wrap">📐</div><span>Corners</span>
-                </button>
-                <button class="action-btn" id="zoomToggle" onclick="toggleZoom()">
-                    <div class="icon-wrap">🔍</div><span>Zoom</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Mini bar (corner editing mode) -->
-        <div id="miniBar">
-            <div class="mini-slider-row">
-                <span class="mini-label">🔆</span>
-                <input type="range" id="miniOpacity" min="0" max="100" value="50" oninput="setOpacity(this.value)">
-                <span class="mini-val" id="miniOpVal">50%</span>
-            </div>
-            <div class="mini-actions">
-                <button class="mini-btn" onclick="resetCorners()">↩ Reset</button>
-                <button class="mini-btn lock-btn" id="lockBtn" onclick="toggleLock()">🔓 Lock</button>
-                <button class="mini-btn primary-btn" onclick="exitCornerMode()">✓ Done</button>
-            </div>
+    <div id="topBar">
+        <div class="status-pill">
+            <div class="status-dot" id="sDot"></div>
+            <span class="status-txt" id="sTxt">Starting…</span>
         </div>
     </div>
 
-    <!-- Upload Modal -->
-    <div id="uploadModal">
-        <div class="modal-card">
-            <div class="modal-title">📸 Load Reference</div>
-            <div class="modal-desc">Choose a reference image to overlay on your camera as a drawing guide</div>
-            <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-                <div class="icon">📂</div>
-                <div class="text">Tap to Select Image</div>
-                <div class="subtext">JPG, PNG, WebP</div>
-            </div>
-            <button class="modal-close-btn" onclick="closeUpload()">Cancel</button>
+    <button id="hideAllBtn" onclick="hideAll()">👁️</button>
+
+    <div id="zoomPill">
+        <button class="zb active" data-z="1" onclick="setZoom(1,this)">1×</button>
+        <button class="zb" data-z="2" onclick="setZoom(2,this)">2×</button>
+        <button class="zb" data-z="3" onclick="setZoom(3,this)">3×</button>
+        <button class="zb" data-z="5" onclick="setZoom(5,this)">5×</button>
+        <button class="zb" data-z="10" onclick="setZoom(10,this)">10×</button>
+    </div>
+
+    <div id="botPanel">
+        <div class="srow" id="oRow">
+            <span class="slbl">Opacity</span>
+            <input type="range" id="oRange" min="0" max="100" value="50" oninput="setOp(this.value)">
+            <span class="sval" id="oVal">50%</span>
+        </div>
+        <div class="srow" id="sRow">
+            <span class="slbl">Scale</span>
+            <input type="range" id="sRange" min="10" max="300" value="100" oninput="setSc(this.value)">
+            <span class="sval" id="sVal">100%</span>
+        </div>
+        <div class="trow" id="tRow">
+            <button class="tbtn" onclick="flipI('h')">↔ Flip H</button>
+            <button class="tbtn" onclick="flipI('v')">↕ Flip V</button>
+            <button class="tbtn" onclick="rotI()">⟳ Rotate</button>
+            <button class="tbtn" onclick="togInv()">◑ Invert</button>
+        </div>
+        <div class="arow">
+            <button class="abtn" onclick="openUpload()">
+                <div class="iw">🖼️</div><span>Image</span>
+            </button>
+            <button class="abtn" id="cBtn" onclick="enterCorners()">
+                <div class="iw">📐</div><span>Corners</span>
+            </button>
+            <button class="abtn" id="zBtn" onclick="togZoom()">
+                <div class="iw">🔍</div><span>Zoom</span>
+            </button>
         </div>
     </div>
 
-    <div id="toast"></div>
-    <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
+    <div id="miniBar">
+        <div class="msr">
+            <span class="ml">🔆</span>
+            <input type="range" id="mOp" min="0" max="100" value="50" oninput="setOp(this.value)">
+            <span class="mv" id="mOv">50%</span>
+        </div>
+        <div class="ma">
+            <button class="mb" onclick="resetC()">↩ Reset</button>
+            <button class="mb lck" id="lBtn" onclick="togLock()">🔓 Lock</button>
+            <button class="mb pri" onclick="exitCorners()">✓ Done</button>
+        </div>
+    </div>
+
+    <!-- Full-screen tap zone to restore hidden UI -->
+    <div id="restoreZone" onclick="showAll()"></div>
+    <div id="restoreHint">Tap anywhere to show controls</div>
+</div>
+
+<div id="uploadModal">
+    <div class="mcard">
+        <div class="mtitle">📸 Load Reference</div>
+        <div class="mdesc">Choose a reference image to overlay on your camera as a drawing guide</div>
+        <div class="uzone" onclick="document.getElementById('fileIn').click()">
+            <div class="icon">📂</div>
+            <div class="text">Tap to Select Image</div>
+            <div class="sub">JPG, PNG, WebP</div>
+        </div>
+        <button class="mclose" onclick="closeUpload()">Cancel</button>
+    </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="fileIn" accept="image/*" onchange="handleFile(event)">
 
 <script>
-// ======== STATE ========
 const S = {
-    stream: null,
-    track: null,
-    zoomCaps: null,
-    img: null,
-    loaded: false,
-    opacity: 0.5,
-    scale: 1,
-    flipH: false,
-    flipV: false,
-    rot: 0,
-    invert: false,
-    corners: null,
-    cornerMode: false,
-    locked: false,
-    currentZoom: 1,
+    stream: null, track: null, zCaps: null,
+    img: null, loaded: false,
+    opacity: 0.5, scale: 1,
+    flipH: false, flipV: false, rot: 0, invert: false,
+    corners: null, cornerMode: false, locked: false,
+    curZoom: 1, allHidden: false,
+    srcCanvas: null, // high-quality pre-rendered source
 };
 
 const W = () => window.innerWidth;
 const H = () => window.innerHeight;
 
-// ======== INIT ========
 function startApp() {
     const sp = document.getElementById('splashScreen');
     sp.classList.add('hidden');
     setTimeout(() => {
         sp.style.display = 'none';
-        document.getElementById('appContainer').classList.add('active');
-        initCamera();
+        document.getElementById('app').classList.add('active');
+        initCam();
     }, 600);
 }
 
-// ======== CAMERA ========
-async function initCamera() {
+// ---- CAMERA ----
+async function initCam() {
     try {
         if (S.stream) S.stream.getTracks().forEach(t => t.stop());
-
         S.stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } },
             audio: false
         });
-
-        const vid = document.getElementById('cameraVideo');
-        vid.srcObject = S.stream;
-        await vid.play();
-
+        const v = document.getElementById('cam');
+        v.srcObject = S.stream;
+        await v.play();
         S.track = S.stream.getVideoTracks()[0];
         const caps = S.track.getCapabilities ? S.track.getCapabilities() : {};
-        S.zoomCaps = caps.zoom || null;
-
-        // Disable zoom buttons beyond max
-        if (S.zoomCaps) {
-            document.querySelectorAll('.zoom-btn').forEach(b => {
-                const z = parseFloat(b.dataset.zoom);
-                b.classList.toggle('disabled', z > S.zoomCaps.max);
+        S.zCaps = caps.zoom || null;
+        if (S.zCaps) {
+            document.querySelectorAll('.zb').forEach(b => {
+                b.classList.toggle('off', parseFloat(b.dataset.z) > S.zCaps.max);
             });
         }
-
-        updateStatus('Camera Ready', false);
-        resizeCanvases();
+        status('Camera Ready', false);
+        resize();
         requestAnimationFrame(render);
     } catch (e) {
         console.error(e);
-        updateStatus('Camera Error', true);
-        showToast('Allow camera permission and reload');
+        status('Camera Error', true);
+        toast('Allow camera permission and reload');
     }
 }
 
 async function setZoom(z, btn) {
-    S.currentZoom = z;
-    if (S.track && S.zoomCaps) {
-        const clamped = Math.max(S.zoomCaps.min, Math.min(S.zoomCaps.max, z));
-        try { await S.track.applyConstraints({ advanced: [{ zoom: clamped }] }); }
-        catch (e) { showToast('Zoom unavailable'); }
+    S.curZoom = z;
+    if (S.track && S.zCaps) {
+        try {
+            await S.track.applyConstraints({ advanced: [{ zoom: Math.max(S.zCaps.min, Math.min(S.zCaps.max, z)) }] });
+        } catch (e) { toast('Zoom unavailable'); }
     }
-    document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.zb').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    else document.querySelectorAll('.zoom-btn').forEach(b => {
-        if (parseFloat(b.dataset.zoom) === z) b.classList.add('active');
+    else document.querySelectorAll('.zb').forEach(b => {
+        if (parseFloat(b.dataset.z) === z) b.classList.add('active');
     });
 }
 
-// ======== RESIZE ========
-function resizeCanvases() {
-    ['overlayCanvas', 'edgeCanvas'].forEach(id => {
+// ---- RESIZE ----
+function resize() {
+    ['overlay', 'edgeCvs'].forEach(id => {
         const c = document.getElementById(id);
         c.width = W(); c.height = H();
     });
-    if (S.loaded && !S.corners) setDefaultCorners();
+    if (S.loaded && !S.corners) defCorners();
 }
-window.addEventListener('resize', resizeCanvases);
+window.addEventListener('resize', resize);
 
-// ======== FILE ========
+// ---- FILE ----
 function openUpload() { document.getElementById('uploadModal').classList.add('active'); }
 function closeUpload() { document.getElementById('uploadModal').classList.remove('active'); }
 
@@ -631,17 +588,18 @@ function handleFile(e) {
             S.img = img;
             S.loaded = true;
             S.flipH = S.flipV = S.invert = false;
-            S.rot = 0;
-            S.scale = 1;
-            document.getElementById('scaleRange').value = 100;
-            document.getElementById('scaleVal').textContent = '100%';
-            setDefaultCorners();
+            S.rot = 0; S.scale = 1;
+            S.srcCanvas = null; // reset cached source
+            document.getElementById('sRange').value = 100;
+            document.getElementById('sVal').textContent = '100%';
+            defCorners();
+            buildSource(); // pre-render at full quality
             closeUpload();
-            document.getElementById('opacityRow').classList.add('visible');
-            document.getElementById('scaleRow').classList.add('visible');
-            document.getElementById('transformRow').classList.add('visible');
-            updateStatus('Overlay Active', false);
-            showToast('Image loaded — tap Corners to adjust');
+            document.getElementById('oRow').classList.add('vis');
+            document.getElementById('sRow').classList.add('vis');
+            document.getElementById('tRow').classList.add('vis');
+            status('Overlay Active', false);
+            toast('Image loaded — tap Corners to adjust');
         };
         img.src = ev.target.result;
     };
@@ -649,211 +607,271 @@ function handleFile(e) {
     e.target.value = '';
 }
 
-function setDefaultCorners() {
+// Pre-render source image at full resolution with transforms
+function buildSource() {
+    if (!S.img) return;
+    const img = S.img;
+    let sw = img.naturalWidth || img.width;
+    let sh = img.naturalHeight || img.height;
+    const rot = S.rot % 4;
+
+    const c = document.createElement('canvas');
+    if (rot === 1 || rot === 3) { c.width = sh; c.height = sw; }
+    else { c.width = sw; c.height = sh; }
+
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.save();
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.rotate(rot * Math.PI / 2);
+    ctx.scale(S.flipH ? -1 : 1, S.flipV ? -1 : 1);
+    ctx.drawImage(img, -sw / 2, -sh / 2, sw, sh);
+    ctx.restore();
+
+    if (S.invert) {
+        ctx.globalCompositeOperation = 'difference';
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    S.srcCanvas = c;
+}
+
+function defCorners() {
     if (!S.img) return;
     const w = W(), h = H();
-    const ar = S.img.width / S.img.height;
+    const sw = S.img.naturalWidth || S.img.width;
+    const sh = S.img.naturalHeight || S.img.height;
+    const ar = sw / sh;
     let iw, ih;
     if (ar > w / h) { iw = w * 0.8; ih = iw / ar; }
     else { ih = h * 0.6; iw = ih * ar; }
     const cx = w / 2, cy = h / 2;
     S.corners = [
-        { x: cx - iw/2, y: cy - ih/2 },
-        { x: cx + iw/2, y: cy - ih/2 },
-        { x: cx + iw/2, y: cy + ih/2 },
-        { x: cx - iw/2, y: cy + ih/2 },
+        { x: cx - iw / 2, y: cy - ih / 2 },
+        { x: cx + iw / 2, y: cy - ih / 2 },
+        { x: cx + iw / 2, y: cy + ih / 2 },
+        { x: cx - iw / 2, y: cy + ih / 2 },
     ];
-    syncHandles();
+    syncH();
 }
 
-// ======== CORNER MODE ========
-function enterCornerMode() {
-    if (!S.loaded) { showToast('Load an image first'); return; }
+// ---- CORNER MODE ----
+function enterCorners() {
+    if (!S.loaded) { toast('Load an image first'); return; }
     S.cornerMode = true;
     S.locked = false;
-    document.getElementById('lockBtn').textContent = '🔓 Lock';
-    document.getElementById('lockBtn').classList.remove('locked');
-
-    // Hide full panel, show mini bar + corners
-    document.getElementById('bottomPanel').style.display = 'none';
+    document.getElementById('lBtn').textContent = '🔓 Lock';
+    document.getElementById('lBtn').classList.remove('locked');
+    document.getElementById('botPanel').style.display = 'none';
     document.getElementById('topBar').style.opacity = '0';
-    document.getElementById('miniBar').classList.add('visible');
-    showCornerHandles(true);
-
-    // Sync mini opacity slider
-    document.getElementById('miniOpacity').value = S.opacity * 100;
-    document.getElementById('miniOpVal').textContent = Math.round(S.opacity * 100) + '%';
-
-    showToast('Drag corners to match your canvas');
+    document.getElementById('hideAllBtn').style.opacity = '0';
+    document.getElementById('hideAllBtn').style.pointerEvents = 'none';
+    document.getElementById('miniBar').classList.add('vis');
+    showCH(true);
+    document.getElementById('mOp').value = S.opacity * 100;
+    document.getElementById('mOv').textContent = Math.round(S.opacity * 100) + '%';
+    toast('Drag corners to match your canvas');
 }
 
-function exitCornerMode() {
+function exitCorners() {
     S.cornerMode = false;
-    document.getElementById('bottomPanel').style.display = '';
+    document.getElementById('botPanel').style.display = '';
     document.getElementById('topBar').style.opacity = '1';
-    document.getElementById('miniBar').classList.remove('visible');
-    showCornerHandles(false);
-
-    // Sync main opacity slider
-    document.getElementById('opacityRange').value = S.opacity * 100;
-    document.getElementById('opacityVal').textContent = Math.round(S.opacity * 100) + '%';
+    document.getElementById('hideAllBtn').style.opacity = '1';
+    document.getElementById('hideAllBtn').style.pointerEvents = '';
+    document.getElementById('miniBar').classList.remove('vis');
+    showCH(false);
+    document.getElementById('oRange').value = S.opacity * 100;
+    document.getElementById('oVal').textContent = Math.round(S.opacity * 100) + '%';
 }
 
-function toggleLock() {
+function togLock() {
     S.locked = !S.locked;
-    const btn = document.getElementById('lockBtn');
+    const b = document.getElementById('lBtn');
     if (S.locked) {
-        btn.textContent = '🔒 Unlock';
-        btn.classList.add('locked');
-        showCornerHandles(false);
-        showToast('Corners locked — start drawing!');
+        b.textContent = '🔒 Unlock';
+        b.classList.add('locked');
+        showCH(false);
+        toast('Corners locked — draw!');
     } else {
-        btn.textContent = '🔓 Lock';
-        btn.classList.remove('locked');
-        showCornerHandles(true);
-        showToast('Corners unlocked');
+        b.textContent = '🔓 Lock';
+        b.classList.remove('locked');
+        showCH(true);
+        toast('Corners unlocked');
     }
 }
 
-function resetCorners() {
-    setDefaultCorners();
+function resetC() {
+    defCorners();
     S.scale = 1;
-    document.getElementById('scaleRange').value = 100;
-    document.getElementById('scaleVal').textContent = '100%';
-    showToast('Corners reset');
+    document.getElementById('sRange').value = 100;
+    document.getElementById('sVal').textContent = '100%';
+    toast('Corners reset');
 }
 
-function showCornerHandles(show) {
+function showCH(v) {
     for (let i = 0; i < 4; i++)
-        document.getElementById('corner' + i).style.display = show ? 'block' : 'none';
+        document.getElementById('c' + i).style.display = v ? 'block' : 'none';
 }
 
-function syncHandles() {
+function syncH() {
     if (!S.corners) return;
     for (let i = 0; i < 4; i++) {
-        const el = document.getElementById('corner' + i);
-        el.style.left = (S.corners[i].x - 28) + 'px';
-        el.style.top = (S.corners[i].y - 28) + 'px';
+        const el = document.getElementById('c' + i);
+        el.style.left = (S.corners[i].x - 30) + 'px';
+        el.style.top = (S.corners[i].y - 30) + 'px';
     }
 }
 
-// ======== CORNER DRAG ========
-(function initDrag() {
-    let active = -1, off = { x: 0, y: 0 };
+// ---- DRAG ----
+(function () {
+    let act = -1, off = { x: 0, y: 0 };
     for (let i = 0; i < 4; i++) {
-        const el = document.getElementById('corner' + i);
+        const el = document.getElementById('c' + i);
         el.addEventListener('touchstart', e => {
             if (S.locked) return;
             e.preventDefault(); e.stopPropagation();
-            active = i;
+            act = i;
             const t = e.touches[0];
             off.x = t.clientX - S.corners[i].x;
             off.y = t.clientY - S.corners[i].y;
         }, { passive: false });
-
         el.addEventListener('touchmove', e => {
-            if (S.locked || active !== i) return;
+            if (S.locked || act !== i) return;
             e.preventDefault(); e.stopPropagation();
             const t = e.touches[0];
             S.corners[i].x = Math.max(0, Math.min(W(), t.clientX - off.x));
             S.corners[i].y = Math.max(0, Math.min(H(), t.clientY - off.y));
-            syncHandles();
+            syncH();
         }, { passive: false });
-
-        el.addEventListener('touchend', () => { active = -1; }, { passive: false });
+        el.addEventListener('touchend', () => { act = -1; });
     }
 })();
 
-// ======== CONTROLS ========
-function setOpacity(v) {
+// ---- CONTROLS ----
+function setOp(v) {
     S.opacity = v / 100;
-    document.getElementById('opacityVal').textContent = v + '%';
-    document.getElementById('miniOpVal').textContent = v + '%';
-    document.getElementById('opacityRange').value = v;
-    document.getElementById('miniOpacity').value = v;
+    document.getElementById('oVal').textContent = v + '%';
+    document.getElementById('mOv').textContent = v + '%';
+    document.getElementById('oRange').value = v;
+    document.getElementById('mOp').value = v;
 }
 
-function setScale(v) {
+function setSc(v) {
     const ns = v / 100;
-    if (!S.corners || !S.img) { S.scale = ns; document.getElementById('scaleVal').textContent = v + '%'; return; }
+    if (!S.corners || !S.img) { S.scale = ns; document.getElementById('sVal').textContent = v + '%'; return; }
     const cx = S.corners.reduce((a, c) => a + c.x, 0) / 4;
     const cy = S.corners.reduce((a, c) => a + c.y, 0) / 4;
     const r = ns / S.scale;
     S.corners.forEach(c => { c.x = cx + (c.x - cx) * r; c.y = cy + (c.y - cy) * r; });
     S.scale = ns;
-    document.getElementById('scaleVal').textContent = v + '%';
-    syncHandles();
+    document.getElementById('sVal').textContent = v + '%';
+    syncH();
 }
 
-function flipImg(d) { if (d === 'h') S.flipH = !S.flipH; else S.flipV = !S.flipV; showToast(d === 'h' ? 'Flipped H' : 'Flipped V'); }
-function rotateImg() { S.rot = (S.rot + 1) % 4; showToast('Rotated ' + (S.rot * 90) + '°'); }
-function toggleInvert() { S.invert = !S.invert; showToast(S.invert ? 'Inverted' : 'Normal'); }
+function flipI(d) {
+    if (d === 'h') S.flipH = !S.flipH; else S.flipV = !S.flipV;
+    buildSource();
+    toast(d === 'h' ? 'Flipped H' : 'Flipped V');
+}
+function rotI() { S.rot = (S.rot + 1) % 4; buildSource(); toast('Rotated ' + (S.rot * 90) + '°'); }
+function togInv() { S.invert = !S.invert; buildSource(); toast(S.invert ? 'Inverted' : 'Normal'); }
 
-function toggleZoom() {
+function togZoom() {
     const zp = document.getElementById('zoomPill');
-    const btn = document.getElementById('zoomToggle');
-    const vis = zp.classList.toggle('visible');
-    btn.classList.toggle('active', vis);
+    const b = document.getElementById('zBtn');
+    const v = zp.classList.toggle('visible');
+    b.classList.toggle('on', v);
 }
 
-// ======== RENDER ========
+// ---- HIDE ALL / SHOW ALL ----
+function hideAll() {
+    S.allHidden = true;
+    document.getElementById('topBar').style.opacity = '0';
+    document.getElementById('topBar').style.pointerEvents = 'none';
+    document.getElementById('botPanel').style.opacity = '0';
+    document.getElementById('botPanel').style.pointerEvents = 'none';
+    document.getElementById('hideAllBtn').style.opacity = '0';
+    document.getElementById('hideAllBtn').style.pointerEvents = 'none';
+    document.getElementById('zoomPill').style.opacity = '0';
+    document.getElementById('zoomPill').style.pointerEvents = 'none';
+    document.getElementById('miniBar').classList.remove('vis');
+    showCH(false);
+
+    document.getElementById('restoreZone').classList.add('vis');
+    document.getElementById('restoreHint').classList.add('vis');
+
+    // fade out hint after 2s
+    setTimeout(() => {
+        document.getElementById('restoreHint').classList.remove('vis');
+    }, 2500);
+}
+
+function showAll() {
+    S.allHidden = false;
+    document.getElementById('restoreZone').classList.remove('vis');
+    document.getElementById('restoreHint').classList.remove('vis');
+
+    if (S.cornerMode) {
+        document.getElementById('miniBar').classList.add('vis');
+        if (!S.locked) showCH(true);
+        // keep topBar/botPanel hidden in corner mode
+        document.getElementById('hideAllBtn').style.opacity = '0';
+        document.getElementById('hideAllBtn').style.pointerEvents = 'none';
+    } else {
+        document.getElementById('topBar').style.opacity = '1';
+        document.getElementById('topBar').style.pointerEvents = '';
+        document.getElementById('botPanel').style.opacity = '1';
+        document.getElementById('botPanel').style.pointerEvents = '';
+        document.getElementById('hideAllBtn').style.opacity = '1';
+        document.getElementById('hideAllBtn').style.pointerEvents = '';
+    }
+    // restore zoom pill state
+    document.getElementById('zoomPill').style.opacity = '';
+    document.getElementById('zoomPill').style.pointerEvents = '';
+}
+
+// ---- RENDER ----
 function render() {
-    if (S.loaded) { drawOverlay(); drawEdges(); }
+    if (S.loaded) { drawOverlay(); drawEdge(); }
     requestAnimationFrame(render);
 }
 
 function drawOverlay() {
-    const canvas = document.getElementById('overlayCanvas');
+    const canvas = document.getElementById('overlay');
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!S.img || !S.corners) return;
+    if (!S.img || !S.corners || !S.srcCanvas) return;
 
     ctx.save();
     ctx.globalAlpha = S.opacity;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
-    // Build transformed source
-    const img = S.img;
-    const off = document.createElement('canvas');
-    let sw = img.width, sh = img.height;
-    const rot = S.rot % 4;
-    if (rot === 1 || rot === 3) { off.width = sh; off.height = sw; }
-    else { off.width = sw; off.height = sh; }
-
-    const oc = off.getContext('2d');
-    oc.save();
-    oc.translate(off.width / 2, off.height / 2);
-    oc.rotate(rot * Math.PI / 2);
-    oc.scale(S.flipH ? -1 : 1, S.flipV ? -1 : 1);
-    oc.drawImage(img, -sw / 2, -sh / 2, sw, sh);
-    oc.restore();
-
-    if (S.invert) {
-        oc.globalCompositeOperation = 'difference';
-        oc.fillStyle = '#fff';
-        oc.fillRect(0, 0, off.width, off.height);
-        oc.globalCompositeOperation = 'source-over';
-    }
-
-    const src = off;
+    const src = S.srcCanvas;
     const c = S.corners;
-    const N = 14; // subdivisions
+    const N = 24; // high subdivision for smooth result
 
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
-            const u0 = i/N, v0 = j/N, u1 = (i+1)/N, v1 = (j+1)/N;
-            const p00 = bilerp(c,u0,v0), p10 = bilerp(c,u1,v0);
-            const p11 = bilerp(c,u1,v1), p01 = bilerp(c,u0,v1);
-            const sx0 = u0*src.width, sy0 = v0*src.height;
-            const sx1 = u1*src.width, sy1 = v1*src.height;
+            const u0 = i / N, v0 = j / N, u1 = (i + 1) / N, v1 = (j + 1) / N;
+            const p00 = bl(c, u0, v0), p10 = bl(c, u1, v0);
+            const p11 = bl(c, u1, v1), p01 = bl(c, u0, v1);
+            const sx0 = u0 * src.width, sy0 = v0 * src.height;
+            const sx1 = u1 * src.width, sy1 = v1 * src.height;
 
-            tri(ctx,src, sx0,sy0, sx1,sy0, sx0,sy1, p00.x,p00.y, p10.x,p10.y, p01.x,p01.y);
-            tri(ctx,src, sx1,sy0, sx1,sy1, sx0,sy1, p10.x,p10.y, p11.x,p11.y, p01.x,p01.y);
+            tri(ctx, src, sx0, sy0, sx1, sy0, sx0, sy1, p00.x, p00.y, p10.x, p10.y, p01.x, p01.y);
+            tri(ctx, src, sx1, sy0, sx1, sy1, sx0, sy1, p10.x, p10.y, p11.x, p11.y, p01.x, p01.y);
         }
     }
     ctx.restore();
 }
 
-function bilerp(c, u, v) {
+function bl(c, u, v) {
     const tx = c[0].x + (c[1].x - c[0].x) * u;
     const ty = c[0].y + (c[1].y - c[0].y) * u;
     const bx = c[3].x + (c[2].x - c[3].x) * u;
@@ -861,68 +879,84 @@ function bilerp(c, u, v) {
     return { x: tx + (bx - tx) * v, y: ty + (by - ty) * v };
 }
 
-function tri(ctx, img, sx0,sy0, sx1,sy1, sx2,sy2, dx0,dy0, dx1,dy1, dx2,dy2) {
+function tri(ctx, img, sx0, sy0, sx1, sy1, sx2, sy2, dx0, dy0, dx1, dy1, dx2, dy2) {
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(dx0,dy0); ctx.lineTo(dx1,dy1); ctx.lineTo(dx2,dy2);
+    ctx.moveTo(dx0, dy0); ctx.lineTo(dx1, dy1); ctx.lineTo(dx2, dy2);
     ctx.closePath(); ctx.clip();
 
-    const d = sx0*(sy1-sy2) + sx1*(sy2-sy0) + sx2*(sy0-sy1);
-    if (Math.abs(d) < 0.01) { ctx.restore(); return; }
+    const d = sx0 * (sy1 - sy2) + sx1 * (sy2 - sy0) + sx2 * (sy0 - sy1);
+    if (Math.abs(d) < 0.001) { ctx.restore(); return; }
 
-    const m11 = (dx0*(sy1-sy2) + dx1*(sy2-sy0) + dx2*(sy0-sy1)) / d;
-    const m12 = (dx0*(sx2-sx1) + dx1*(sx0-sx2) + dx2*(sx1-sx0)) / d;
-    const m13 = (dx0*(sx1*sy2-sx2*sy1) + dx1*(sx2*sy0-sx0*sy2) + dx2*(sx0*sy1-sx1*sy0)) / d;
-    const m21 = (dy0*(sy1-sy2) + dy1*(sy2-sy0) + dy2*(sy0-sy1)) / d;
-    const m22 = (dy0*(sx2-sx1) + dy1*(sx0-sx2) + dy2*(sx1-sx0)) / d;
-    const m23 = (dy0*(sx1*sy2-sx2*sy1) + dy1*(sx2*sy0-sx0*sy2) + dy2*(sx0*sy1-sx1*sy0)) / d;
+    const a = (dx0 * (sy1 - sy2) + dx1 * (sy2 - sy0) + dx2 * (sy0 - sy1)) / d;
+    const b = (dx0 * (sx2 - sx1) + dx1 * (sx0 - sx2) + dx2 * (sx1 - sx0)) / d;
+    const e = (dx0 * (sx1 * sy2 - sx2 * sy1) + dx1 * (sx2 * sy0 - sx0 * sy2) + dx2 * (sx0 * sy1 - sx1 * sy0)) / d;
+    const f = (dy0 * (sy1 - sy2) + dy1 * (sy2 - sy0) + dy2 * (sy0 - sy1)) / d;
+    const g = (dy0 * (sx2 - sx1) + dy1 * (sx0 - sx2) + dy2 * (sx1 - sx0)) / d;
+    const h = (dy0 * (sx1 * sy2 - sx2 * sy1) + dy1 * (sx2 * sy0 - sx0 * sy2) + dy2 * (sx0 * sy1 - sx1 * sy0)) / d;
 
-    ctx.setTransform(m11,m21, m12,m22, m13,m23);
+    ctx.setTransform(a, f, b, g, e, h);
     ctx.drawImage(img, 0, 0);
     ctx.restore();
 }
 
-function drawEdges() {
-    const canvas = document.getElementById('edgeCanvas');
+function drawEdge() {
+    const canvas = document.getElementById('edgeCvs');
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!S.corners || !S.cornerMode) return;
+    if (!S.corners || !S.cornerMode || S.locked) return;
 
+    // Only draw subtle corner markers, no wireframe over image
     const c = S.corners;
-    ctx.strokeStyle = S.locked ? 'rgba(255,107,107,0.6)' : 'rgba(0,206,201,0.7)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 6]);
-    ctx.beginPath();
-    ctx.moveTo(c[0].x, c[0].y);
-    for (let i = 1; i < 4; i++) ctx.lineTo(c[i].x, c[i].y);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.setLineDash([]);
+    const len = 20;
+    ctx.strokeStyle = 'rgba(0,206,201,0.8)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+
+    for (let i = 0; i < 4; i++) {
+        const curr = c[i];
+        const next = c[(i + 1) % 4];
+        const prev = c[(i + 3) % 4];
+
+        // Direction to next
+        let dx1 = next.x - curr.x, dy1 = next.y - curr.y;
+        let l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+        if (l1 > 0) { dx1 /= l1; dy1 /= l1; }
+
+        // Direction to prev
+        let dx2 = prev.x - curr.x, dy2 = prev.y - curr.y;
+        let l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        if (l2 > 0) { dx2 /= l2; dy2 /= l2; }
+
+        const armLen = Math.min(len, l1 * 0.3, l2 * 0.3);
+
+        ctx.beginPath();
+        ctx.moveTo(curr.x + dx2 * armLen, curr.y + dy2 * armLen);
+        ctx.lineTo(curr.x, curr.y);
+        ctx.lineTo(curr.x + dx1 * armLen, curr.y + dy1 * armLen);
+        ctx.stroke();
+    }
 }
 
-// ======== UTILS ========
-function updateStatus(t, warn) {
-    document.getElementById('statusText').textContent = t;
-    document.getElementById('statusDot').classList.toggle('warning', warn);
+// ---- UTILS ----
+function status(t, w) {
+    document.getElementById('sTxt').textContent = t;
+    document.getElementById('sDot').classList.toggle('warn', w);
 }
 
-let toastT;
-function showToast(msg) {
+let tt;
+function toast(m) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('visible');
-    clearTimeout(toastT);
-    toastT = setTimeout(() => t.classList.remove('visible'), 2200);
+    t.textContent = m; t.classList.add('vis');
+    clearTimeout(tt);
+    tt = setTimeout(() => t.classList.remove('vis'), 2200);
 }
 
 // Wake lock
 (async () => {
-    try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch(e) {}
-    document.addEventListener('visibilitychange', async () => {
-        if (document.visibilityState === 'visible') {
-            try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch(e) {}
-        }
-    });
+    const req = async () => { try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch (e) {} };
+    await req();
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') req(); });
 })();
 </script>
 </body>
