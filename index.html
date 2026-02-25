@@ -7,7 +7,8 @@
     <style>
         * {
             margin: 0; padding: 0; box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; touch-action: none;
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: none; /* جلوگیری از اسکرول و زوم پیش‌فرض مرورگر */
         }
 
         :root {
@@ -24,6 +25,8 @@
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow: hidden; height: 100dvh; width: 100vw; position: fixed;
         }
+
+        button { cursor: pointer; } /* اضافه شدن نشانگر موس برای دسکتاپ */
 
         /* --- SPLASH SCREEN --- */
         #splashScreen {
@@ -62,6 +65,7 @@
         .ch {
             position: absolute; width: 56px; height: 56px;
             z-index: 50; display: none; margin: -28px 0 0 -28px;
+            cursor: move; /* نشانگر جابجایی برای موس دسکتاپ */
         }
         .ch .dot {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
@@ -104,7 +108,7 @@
         .ctrl-val { font-size: 13px; font-weight: 700; color: var(--accent); width: 40px; text-align: right; }
         
         input[type="range"] {
-            -webkit-appearance: none; flex: 1; height: 6px; border-radius: 3px;
+            -webkit-appearance: none; flex: 1; height: 6px; border-radius: 3px; cursor: pointer;
             background: rgba(255,255,255,0.2); outline: none;
         }
         input[type="range"]::-webkit-slider-thumb {
@@ -183,13 +187,14 @@
         .modal-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 8px; }
         .modal-desc { font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 24px; }
         .upload-zone {
+            cursor: pointer;
             border: 2px dashed rgba(108,92,231,0.5); border-radius: 16px; padding: 40px 20px;
             text-align: center; background: rgba(108,92,231,0.05); margin-bottom: 16px; transition: 0.2s;
         }
         .upload-zone:active { background: rgba(108,92,231,0.15); border-color: var(--primary-light); }
         .upload-zone .icon { font-size: 40px; margin-bottom: 10px; }
         .upload-zone .text { font-size: 15px; font-weight: 700; color: var(--primary-light); }
-        .modal-close { width: 100%; padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.1); color: white; font-weight: 700; border: none; }
+        .modal-close { width: 100%; padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.1); color: white; font-weight: 700; border: none; cursor: pointer; }
 
         /* --- TOAST --- */
         #toast {
@@ -290,9 +295,9 @@ const S = {
     img: null, loaded: false,
     opacity: 0.7, scale: 1,
     flipH: false, flipV: false, rot: 0,
-    blendMode: 'normal', // normal or multiply
+    blendMode: 'normal', 
     corners: null, cornerMode: false, locked: false,
-    uiHidden: false, // اضافه شدن وضعیت مخفی بودن رابط کاربری
+    uiHidden: false, 
     srcCanvas: null, 
     meshDirty: false, 
     needsRender: false 
@@ -322,7 +327,6 @@ function toggleUI() {
     if (S.uiHidden) {
         app.classList.add('ui-hidden');
         eyeBtn.innerHTML = '👁️'; 
-        // وقتی هاید میشه آیکون چشم روی صفحه میمونه ولی خیلی محو
         toast('UI Hidden. Tap the faint eye to restore.');
     } else {
         app.classList.remove('ui-hidden');
@@ -507,22 +511,42 @@ function syncH() {
     }
 }
 
-// Touch Dragging
+// ---- UNIVERSAL DRAGGING (TOUCH, MOUSE, STYLUS) ----
 (function () {
     let act = -1;
     for (let i = 0; i < 4; i++) {
         const el = document.getElementById('c' + i);
-        el.addEventListener('touchstart', e => {
-            if (S.locked) return; e.preventDefault(); act = i;
-        }, { passive: false });
-        el.addEventListener('touchmove', e => {
-            if (S.locked || act !== i) return; e.preventDefault();
-            const t = e.touches[0];
-            S.corners[i].x = Math.max(0, Math.min(W(), t.clientX));
-            S.corners[i].y = Math.max(0, Math.min(H(), t.clientY));
-            syncH(); S.meshDirty = true; S.needsRender = true;
-        }, { passive: false });
-        el.addEventListener('touchend', () => { act = -1; });
+        
+        // PointerDown جایگزین mousedown و touchstart
+        el.addEventListener('pointerdown', e => {
+            if (S.locked) return;
+            e.preventDefault();
+            act = i;
+            // این ویژگی باعث میشه حتی اگه موس از روی دکمه در رفت، درگ قطع نشه
+            el.setPointerCapture(e.pointerId);
+        });
+
+        // PointerMove جایگزین mousemove و touchmove
+        el.addEventListener('pointermove', e => {
+            if (S.locked || act !== i) return;
+            e.preventDefault();
+            
+            S.corners[i].x = Math.max(0, Math.min(W(), e.clientX));
+            S.corners[i].y = Math.max(0, Math.min(H(), e.clientY));
+            
+            syncH();
+            S.meshDirty = true;
+            S.needsRender = true;
+        });
+
+        // PointerUp جایگزین mouseup و touchend
+        el.addEventListener('pointerup', e => {
+            act = -1;
+            el.releasePointerCapture(e.pointerId);
+        });
+
+        // برای مواقعی که مثلا لمس قطع میشه یا صفحه اسکرول میخوره
+        el.addEventListener('pointercancel', () => { act = -1; });
     }
 })();
 
